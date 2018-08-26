@@ -4,3 +4,4 @@ dependencies:
   - flask
   - sqlalchemy
   - pip
+  - psycopg2
