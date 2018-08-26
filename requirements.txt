@@ -1,2 +1,6 @@
-Flask==0.10.1
-SQLAlchemy==0.8.4
+SQLAlchemy==1.2
+Flask==1.02
+google-api-python-client
+oauth2client
+googleapiclient
+json
