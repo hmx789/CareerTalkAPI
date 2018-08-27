@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Time
 from sqlalchemy.orm import relationship
 import json
 
@@ -38,8 +38,10 @@ class Fair(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     description = Column(String)
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
     organization = Column(String(250), nullable=False)
     companies = relationship('Company')
 
@@ -54,32 +56,81 @@ class Fair(Base):
             'description': self.description,
             'companies': comapnies,
             'start_date': self.start_date,
+            'end_date': self.end_date,
+            'start_time': self.start_time,
+            'end_time': self.end_time
         }
+
+
+class HiringType(Base):
+    __tablename__ = 'hiring_type'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(20), nullable=False)
+
+
+class Degree(Base):
+    __tablename__ = 'degree_type'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(20), nullable=False)
+
+
+class Visa(Base):
+    __tablename__ = 'visa_type'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(6), nullable=False)
 
 
 class Company(Base):
     __tablename__ = 'company'
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    description = Column(String(), nullable=False)
-    hiring_types = Column(Integer)
+    description = Column(String())
+    hiring_types = Column(Integer, ForeignKey('hiring_type.id'))
     hiring_majors = Column(String())
-    degree = Column(Integer)
-    visa = Column(Integer)
+    degree = Column(Integer, ForeignKey('degree_type.id'))
+    visa = Column(Integer, ForeignKey('visa_type.id'))
     fair_id = Column(Integer, ForeignKey('fair.id'))
     fair = relationship(Fair)
 
     @property
     def serialize(self):
-        """Return object data in easily serializable format"""
+        """
+        Return object data in easily serializable format
+
+        hiring types:
+        0: intern
+        1: full time
+        2: intern + full time
+
+        degree:
+        1: BS
+        2: MS
+        3: PhD
+        4: BS, MS
+        5: BS, PhD
+        6: MS, PhD
+        7: BS, MS, PhD
+
+        visa:
+        0: false
+        1: true
+        2: maybe
+        """
+
+        degree = [['BS'], ['MS'], ['PhD'], ['BS', 'MS'], ['BS', 'PhD'],
+                  ['MS', 'PhD'], ['BS', 'MS' 'PhD']]
+
+        types = ['INT', 'FT', ['INT', 'FT']]
+        visa = ['Yes', 'No', 'Maybe']
+        majors = [major.strip() for major in self.hiring_majors.split(',')]
 
         return {
             'fair': self.fair,
             'fair_id': self.fair_id,
-            'visa': self.visa,
-            'degree': self.degree,
-            'hiring_majors': self.hiring_majors,
-            'hiring_types': self.hiring_types,
+            'visa': visa[self.visa-1],
+            'degree': degree[self.degree-1],
+            'hiring_majors': majors,
+            'hiring_types': types[self.hiring_types-1],
             'description': self.description,
             'name': self.name,
             'id': self.id,
