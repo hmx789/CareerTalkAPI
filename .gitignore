@@ -3,3 +3,4 @@ __pycache__/
 gsheet_credentials.json
 token.json
 config.json
+careertalk.db
