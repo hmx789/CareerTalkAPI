@@ -14,12 +14,18 @@ with open('config.json', 'r') as f:
     config = json.load(f)
 
 postgres = config["POSTGRES"]
+"""
+use this one on production
+
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["user"],
                                                 postgres["pw"],
                                                 postgres["endpoint"],
                                                 postgres["port"],
                                                 postgres["db"]))
+"""
+
+engine = create_engine('sqlite:///careertalk.db')
 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
@@ -100,6 +106,8 @@ def insert_rows():
 @app.route('/main')
 def main():
     return "hello world"
+
+insert_rows()
 
 if __name__ == "__main__":
     app.secret_key = config['DEFAULT']['SECRET_KEY']

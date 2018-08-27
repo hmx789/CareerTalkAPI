@@ -90,6 +90,7 @@ class Company(Base):
     degree = Column(Integer, ForeignKey('degree_type.id'))
     visa = Column(Integer, ForeignKey('visa_type.id'))
     fair_id = Column(Integer, ForeignKey('fair.id'))
+    logo = Column(String())
     fair = relationship(Fair)
 
     @property
@@ -135,11 +136,14 @@ class Company(Base):
             'name': self.name,
             'id': self.id,
         }
-
+"""
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["user"],
                                                 postgres["pw"],
                                                 postgres["endpoint"],
                                                 postgres["port"],
                                                 postgres["db"]))
+
+"""
+engine = create_engine('sqlite:///careertalk.db')
 Base.metadata.create_all(engine)
