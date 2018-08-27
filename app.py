@@ -90,18 +90,6 @@ def insert_rows():
         print(row[2])
         print("Adding a company . . .")
 
-        '''
-        id = Column(Integer, primary_key=True)
-        name = Column(String(100), nullable=False)
-        description = Column(String(), nullable=False)
-        hiring_types = Column(Integer, ForeignKey('hiring_type.id'))
-        hiring_majors = Column(String())
-        degree = Column(Integer, ForeignKey('degree_type.id'))
-        visa = Column(Integer, ForeignKey('visa_type.id'))
-        fair_id = Column(Integer, ForeignKey('fair.id'))
-        fair = relationship(Fair)
-
-        '''
         company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                           degree=degree, visa=visa, fair_id=1)
         session.add(company)
