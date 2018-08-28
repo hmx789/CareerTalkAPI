@@ -5,3 +5,5 @@ dependencies:
   - sqlalchemy
   - pip
   - psycopg2
+  - requests
+  - pyopenssl
