@@ -3,12 +3,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Time
 from sqlalchemy.orm import relationship
 import json
+import os,sys, inspect
 
-with open('config.json', 'r') as f:
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+with open('{}/config.json'.format(current_dir), 'r') as f:
     config = json.load(f)
 postgres = config["POSTGRES"]
 Base = declarative_base()
-
 
 class User(Base):
     __tablename__ = 'user'
@@ -99,9 +101,9 @@ class Company(Base):
         Return object data in easily serializable format
 
         hiring types:
-        0: intern
-        1: full time
-        2: intern + full time
+        1: intern
+        2: full time
+        3: intern + full time
 
         degree:
         1: BS
@@ -113,16 +115,16 @@ class Company(Base):
         7: BS, MS, PhD
 
         visa:
-        0: false
-        1: true
-        2: maybe
+        1: false
+        2: true
+        3: maybe
         """
 
         degree = [['BS'], ['MS'], ['PhD'], ['BS', 'MS'], ['BS', 'PhD'],
                   ['MS', 'PhD'], ['BS', 'MS' 'PhD']]
 
         types = ['INT', 'FT', ['INT', 'FT']]
-        visa = ['Yes', 'No', 'Maybe']
+        visa = ['yes', 'no', 'maybe']
         majors = [major.strip() for major in self.hiring_majors.split(',')]
 
         return {
