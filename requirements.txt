@@ -3,3 +3,4 @@ Flask==1.02
 google-api-python-client
 oauth2client
 googleapiclient
+requests_oauthlib
