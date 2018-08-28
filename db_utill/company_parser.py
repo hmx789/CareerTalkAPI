@@ -6,7 +6,18 @@ import os, inspect, sys, re
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
-from database_setup import Company
+
+from sqlalchemy import create_engine, asc, desc
+from sqlalchemy.orm import sessionmaker
+from database_setup import Base, Company
+
+
+def get_db_connection():
+    engine = create_engine('sqlite:///../careertalk.db')
+    Base.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    db_session = DBSession()
+    return db_session
 
 
 def match_company_url(raw_url, pattern):
@@ -47,16 +58,18 @@ def get_company_info():
     # print("============================================================")
     links_rows = links['sheets'][0]['data'][0]['rowData']
     pattern = re.compile('(//)(.+\.)(com|org|net|edu|gov|mil)')
+    urls = []
     for val in links_rows:
         raw_url = val['values'][0]['hyperlink']
         url = match_company_url(raw_url, pattern)
-        print(url)
-    return values
+        urls.append(url)
+        # print(url)
+    return values, urls
 
 
 def insert_rows():
-    data = get_company_info()
-    for row in data:
+    data, urls = get_company_info()
+    for i, row in enumerate(data):
         name = row[0]
         if row[1].strip().lower() == 'int':
             type = 1
@@ -85,17 +98,23 @@ def insert_rows():
         else:
             visa = 3
 
-        print("name: {}, hiringtype: {}, degree: {}, visa: {}".format(name,
-                                                                      type,
-                                                                      degree,
-                                                                      visa))
+        print(len(data), len(urls))
+        print("name:{}, type:{}, degree:{}, visa:{}, url:{}".format(name,
+                                                                    type,
+                                                                    degree,
+                                                                    visa,
+                                                                    urls[i]))
         print(row[2])
         print("fetching logo . . .")
         print("Adding a company . . .")
 
-        company = Company(name=name, hiring_types=type, hiring_majors=row[2],
-                          degree=degree, visa=visa, fair_id=1)
-        #db_session.add(company)
-        #db_session.commit()
 
-get_company_info()
+        db_session = get_db_connection()
+        company = Company(name=name, hiring_types=type, hiring_majors=row[2],
+                          degree=degree, visa=visa, company_url=urls[i],
+                          fair_id=1)
+        db_session.add(company)
+        db_session.commit()
+
+
+insert_rows()

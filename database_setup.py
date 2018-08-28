@@ -92,7 +92,7 @@ class Company(Base):
     degree = Column(Integer, ForeignKey('degree_type.id'))
     visa = Column(Integer, ForeignKey('visa_type.id'))
     fair_id = Column(Integer, ForeignKey('fair.id'))
-    logo = Column(String())
+    company_url = Column(String())
     fair = relationship(Fair)
 
     @property

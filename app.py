@@ -7,9 +7,6 @@ from database_setup import Base, User, Company, Fair
 from requests_oauthlib import OAuth2Session
 from requests_oauthlib.compliance_fixes import linkedin_compliance_fix
 
-from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import file, client, tools
 import json
 import requests
 import pprint
@@ -34,7 +31,6 @@ engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
 """
 
 engine = create_engine('sqlite:///careertalk.db')
-
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
