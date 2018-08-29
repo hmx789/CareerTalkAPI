@@ -68,6 +68,7 @@ def get_company_info():
 
 def insert_rows():
     data, urls = get_company_info()
+    print("Adding a company . . .")
     for i, row in enumerate(data):
         name = row[0]
         if row[1].strip().lower() == 'int':
@@ -97,41 +98,12 @@ def insert_rows():
         else:
             visa = 3
 
-        print(len(data), len(urls))
         print("name:{}, type:{}, degree:{}, visa:{}, url:{}".format(name,
                                                                     type,
                                                                     degree,
                                                                     visa,
                                                                     urls[i]))
-        print(row[2])
-        print("fetching logo . . .")
-        print("Adding a company . . .")
 
-        '''
-        id INTEGER NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        description VARCHAR,
-        hiring_types INTEGER,
-        hiring_majors VARCHAR,
-        degree INTEGER,
-        visa INTEGER,
-        fair_id INTEGER,
-        company_url VARCHAR,
-        PRIMARY KEY (id),
-        FOREIGN KEY(hiring_types) REFERENCES hiring_type (id),
-        FOREIGN KEY(degree) REFERENCES degree_type (id),
-        FOREIGN KEY(visa) REFERENCES visa_type (id),
-        FOREIGN KEY(fair_id) REFERENCES fair (id)
-
-
-        company [SQL: 'INSERT INTO company (name,
-                description, hiring_types,
-                hiring_majors, degree,
-                visa, fair_id,
-                company_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)']
-                [parameters: ('ACTICO', None, 3, 'CS', 4, 2, 1, 'actico.com')]
-
-        '''
         db_session = get_db_connection()
         company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                           degree=degree, visa=visa, company_url=urls[i],
