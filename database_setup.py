@@ -120,7 +120,7 @@ class Company(Base):
         3: maybe
         """
 
-        degree = [['BS'], ['MS'], ['PhD'], ['BS', 'MS'], ['BS', 'PhD'],
+        degree = ['BS', 'MS', 'PhD', ['BS', 'MS'], ['BS', 'PhD'],
                   ['MS', 'PhD'], ['BS', 'MS' 'PhD']]
 
         types = ['INT', 'FT', ['INT', 'FT']]
@@ -135,6 +135,7 @@ class Company(Base):
             'hiring_majors': majors,
             'hiring_types': types[self.hiring_types-1],
             'description': self.description,
+            'company_url': self.company_url,
             'name': self.name,
             'id': self.id,
         }

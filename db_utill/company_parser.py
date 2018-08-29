@@ -1,14 +1,13 @@
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
+from sqlalchemy import create_engine, asc, desc
+from sqlalchemy.orm import sessionmaker
 import os, inspect, sys, re
 # direct import the database_setup module.
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
-
-from sqlalchemy import create_engine, asc, desc
-from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Company
 
 
@@ -69,6 +68,7 @@ def get_company_info():
 
 def insert_rows():
     data, urls = get_company_info()
+    print("Adding a company . . .")
     for i, row in enumerate(data):
         name = row[0]
         if row[1].strip().lower() == 'int':
@@ -90,7 +90,7 @@ def insert_rows():
         elif row[3].strip().lower() == 'ms, phd':
             degree = 6
         else:
-            degree = 8
+            degree = 7
         if row[4].strip().lower() == 'yes':
             visa = 1
         elif row[4].strip().lower() == 'no':
@@ -98,21 +98,17 @@ def insert_rows():
         else:
             visa = 3
 
-        print(len(data), len(urls))
         print("name:{}, type:{}, degree:{}, visa:{}, url:{}".format(name,
                                                                     type,
                                                                     degree,
                                                                     visa,
                                                                     urls[i]))
-        print(row[2])
-        print("fetching logo . . .")
-        print("Adding a company . . .")
-
 
         db_session = get_db_connection()
         company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                           degree=degree, visa=visa, company_url=urls[i],
-                          fair_id=1)
+                          fair_id=1, description='')
+
         db_session.add(company)
         db_session.commit()
 

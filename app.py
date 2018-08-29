@@ -71,7 +71,6 @@ def auth_linkedin_entry():
     authorization_url, state = linkedin_session.authorization_url(
                                                         linkedin['auth_url'])
     login_session["state"] = state
-    print("Redirect User!!!")
     return redirect(authorization_url)
 
 
@@ -88,6 +87,12 @@ def get_logo():
     print(stuff)
 
     return "worked"
+
+@app.route('/companies')
+def get_companies():
+    companies = db_session.query(Company).all()
+    company_list = [company.serialize for company in companies]
+    return jsonify(Company=company_list)
 
 
 # insert_rows()
