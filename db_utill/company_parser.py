@@ -1,14 +1,13 @@
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
+from sqlalchemy import create_engine, asc, desc
+from sqlalchemy.orm import sessionmaker
 import os, inspect, sys, re
 # direct import the database_setup module.
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
-
-from sqlalchemy import create_engine, asc, desc
-from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Company
 
 
@@ -90,7 +89,7 @@ def insert_rows():
         elif row[3].strip().lower() == 'ms, phd':
             degree = 6
         else:
-            degree = 8
+            degree = 7
         if row[4].strip().lower() == 'yes':
             visa = 1
         elif row[4].strip().lower() == 'no':
@@ -108,11 +107,36 @@ def insert_rows():
         print("fetching logo . . .")
         print("Adding a company . . .")
 
+        '''
+        id INTEGER NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        description VARCHAR,
+        hiring_types INTEGER,
+        hiring_majors VARCHAR,
+        degree INTEGER,
+        visa INTEGER,
+        fair_id INTEGER,
+        company_url VARCHAR,
+        PRIMARY KEY (id),
+        FOREIGN KEY(hiring_types) REFERENCES hiring_type (id),
+        FOREIGN KEY(degree) REFERENCES degree_type (id),
+        FOREIGN KEY(visa) REFERENCES visa_type (id),
+        FOREIGN KEY(fair_id) REFERENCES fair (id)
 
+
+        company [SQL: 'INSERT INTO company (name,
+                description, hiring_types,
+                hiring_majors, degree,
+                visa, fair_id,
+                company_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)']
+                [parameters: ('ACTICO', None, 3, 'CS', 4, 2, 1, 'actico.com')]
+
+        '''
         db_session = get_db_connection()
         company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                           degree=degree, visa=visa, company_url=urls[i],
-                          fair_id=1)
+                          fair_id=1, description='')
+
         db_session.add(company)
         db_session.commit()
 
