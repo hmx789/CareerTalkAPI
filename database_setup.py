@@ -120,10 +120,10 @@ class Company(Base):
         3: maybe
         """
 
-        degree = ['BS', 'MS', 'PhD', ['BS', 'MS'], ['BS', 'PhD'],
-                  ['MS', 'PhD'], ['BS', 'MS' 'PhD']]
+        degree = [['BS'], ['MS'], ['PhD'], ['BS', 'MS'], ['BS', 'PhD'],
+                  ['MS', 'PhD'], ['BS', 'MS', 'PhD']]
 
-        types = ['INT', 'FT', ['INT', 'FT']]
+        types = [['INT'], ['FT'], ['INT', 'FT']]
         visa = ['yes', 'no', 'maybe']
         majors = [major.strip() for major in self.hiring_majors.split(',')]
 
