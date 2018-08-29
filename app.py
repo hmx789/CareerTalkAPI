@@ -36,8 +36,6 @@ DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
 
 
-
-
 @app.route('/')
 @app.route('/main')
 def main():
@@ -84,9 +82,8 @@ def get_logo():
                              token=linkedin_token)
     stuff = linkedin.request(
         'get', 'https://api.linkedin.com/v2/organizations?q=vanityName&vanityName=Linkedin')
-    print(stuff)
-
     return "worked"
+
 
 @app.route('/companies')
 def get_companies():
@@ -95,8 +92,16 @@ def get_companies():
     return jsonify(Company=company_list)
 
 
-# insert_rows()
+@app.route('/careerfairs')
+def get_careerfairs():
+    fairs = db_session.query(Fair).all()
+    fair_list = [fair.serialize for fair in fairs]
+    return jsonify(Careerfair=fair_list)
+
+
+
+
 if __name__ == "__main__":
     app.secret_key = config['DEFAULT']['SECRET_KEY']
     app.debug = True
-    app.run(ssl_context='adhoc')
+    app.run()
