@@ -12,6 +12,13 @@ with open('{}/config.json'.format(current_dir), 'r') as f:
 postgres = config["POSTGRES"]
 Base = declarative_base()
 
+
+
+def _to_minutes(time):
+    t = time.hour * 60 + time.minute
+    return t
+
+
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
@@ -50,17 +57,22 @@ class Fair(Base):
     @property
     def serialize(self):
         """Return object data in easily serializable format"""
-        comapnies = [company.serialize for company in self.companies]
+        companies = [company.serialize for company in self.companies]
         return {
             'id': self.id,
             'name': self.name,
             'organization': self.organization,
             'description': self.description,
-            'companies': comapnies,
-            'start_date': self.start_date,
+            'companies': companies,
+            'date': {
+                'year': self.start_date.year,
+                'month': self.start_date.month,
+                'day': self.start_date.day
+            },
+            'start_date_min': self.start_date,
             'end_date': self.end_date,
-            'start_time': self.start_time,
-            'end_time': self.end_time
+            'start_time_min': _to_minutes(self.start_time),
+            'end_time': _to_minutes(self.end_time)
         }
 
 
@@ -93,7 +105,7 @@ class Company(Base):
     visa = Column(Integer, ForeignKey('visa_type.id'))
     fair_id = Column(Integer, ForeignKey('fair.id'))
     company_url = Column(String())
-    fair = relationship(Fair)
+    fair = relationship('Fair')
 
     @property
     def serialize(self):
@@ -128,7 +140,7 @@ class Company(Base):
         majors = [major.strip() for major in self.hiring_majors.split(',')]
 
         return {
-            'fair': self.fair,
+            'fair': self.fair.name,
             'fair_id': self.fair_id,
             'visa': visa[self.visa-1],
             'degree': degree[self.degree-1],
