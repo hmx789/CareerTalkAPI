@@ -1,7 +1,7 @@
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-from sqlalchemy import create_engine, asc, desc
+from sqlalchemy import create_engine, asc, desc, func
 from sqlalchemy.orm import sessionmaker
 import os, inspect, sys, re
 # direct import the database_setup module.
@@ -69,6 +69,7 @@ def get_company_info():
 def insert_rows():
     data, urls = get_company_info()
     print("Adding a company . . .")
+    db_session = get_db_connection()
     for i, row in enumerate(data):
         name = row[0]
         if row[1].strip().lower() == 'int':
@@ -98,19 +99,18 @@ def insert_rows():
         else:
             visa = 3
 
-        print("name:{}, type:{}, degree:{}, visa:{}, url:{}".format(name,
-                                                                    type,
-                                                                    degree,
-                                                                    visa,
-                                                                    urls[i]))
+        print(name)
 
-        db_session = get_db_connection()
-        company = Company(name=name, hiring_types=type, hiring_majors=row[2],
-                          degree=degree, visa=visa, company_url=urls[i],
-                          fair_id=1, description='')
-
-        db_session.add(company)
-        db_session.commit()
-
+        if db_session.query(Company).filter(Company.name == name).count() == 0:
+            log_string = '''
+            name:{}, type:{}, degree:{}, visa:{}, url:{}
+            '''.format(name, type, degree, visa, urls[i])
+            company = Company(name=name, hiring_types=type, hiring_majors=row[2],
+                              degree=degree, visa=visa, company_url=urls[i],
+                              fair_id=1, description='')
+            db_session.add(company)
+            db_session.commit()
+        else:
+            print("The company already exists in our db.")
 
 insert_rows()
