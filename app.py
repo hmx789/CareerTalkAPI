@@ -30,7 +30,9 @@ engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["db"]))
 """
 
-engine = create_engine('sqlite:///careertalk.db')
+engine = create_engine('sqlite:///careertalk.db', 
+                        connect_args={'check_same_thread': False}, 
+                        echo=False)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
@@ -85,9 +87,9 @@ def get_logo():
     return "worked"
 
 
-@app.route('/companies')
-def get_companies():
-    companies = db_session.query(Company).all()
+@app.route("/<int:fair_id>/companies", methods=['GET'])
+def get_companies(fair_id):
+    companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)
 
@@ -97,8 +99,6 @@ def get_careerfairs():
     fairs = db_session.query(Fair).all()
     fair_list = [fair.serialize for fair in fairs]
     return jsonify(Careerfair=fair_list)
-
-
 
 
 if __name__ == "__main__":

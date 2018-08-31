@@ -31,8 +31,8 @@ def match_company_url(raw_url, pattern):
 
 def get_company_info():
     SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-    SPREADSHEET_ID = '1fKG4iVnj9coxg2mwip4reD7Rt5eiBvlEDM-Hu84M3zE'
-    RANGE_NAME = 'Sheet1!A4:E48'
+    SPREADSHEET_ID = '1SASWQ3XHN2IeSylfVgDQs-gv-Vg4DjmUkcnWuKVe3Tw'
+    RANGE_NAME = 'Sheet1!A4:E78'
     store = file.Storage('token.json')
     creds = store.get()
     if not creds or creds.invalid:
@@ -99,18 +99,20 @@ def insert_rows():
         else:
             visa = 3
 
-        print(name)
+        print(i, name)
 
-        if db_session.query(Company).filter(Company.name == name).count() == 0:
+        if db_session.query(Company).filter(Company.name == name).\
+                                     filter(Company.fair_id == 2).count() == 0:
             log_string = '''
             name:{}, type:{}, degree:{}, visa:{}, url:{}
             '''.format(name, type, degree, visa, urls[i])
             company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                               degree=degree, visa=visa, company_url=urls[i],
-                              fair_id=1, description='')
+                              fair_id=2, description='')
             db_session.add(company)
             db_session.commit()
         else:
             print("The company already exists in our db.")
+
 
 insert_rows()
