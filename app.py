@@ -85,9 +85,9 @@ def get_logo():
     return "worked"
 
 
-@app.route('/companies')
+@app.route("/<int:fair_id>/companies")
 def get_companies():
-    companies = db_session.query(Company).all()
+    companies = db_session.query(Company).filter_by(id = fair_id).all()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)
 
@@ -97,8 +97,6 @@ def get_careerfairs():
     fairs = db_session.query(Fair).all()
     fair_list = [fair.serialize for fair in fairs]
     return jsonify(Careerfair=fair_list)
-
-
 
 
 if __name__ == "__main__":
