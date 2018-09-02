@@ -51,6 +51,7 @@ class Fair(Base):
     end_date = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
+    location = Column(String)
     organization = Column(String(250), nullable=False)
     companies = relationship('Company')
 
@@ -64,6 +65,7 @@ class Fair(Base):
             'organization': self.organization,
             'description': self.description,
             'companies': companies,
+            'location': self.location,
             'date': {
                 'year': self.start_date.year,
                 'month': self.start_date.month,
