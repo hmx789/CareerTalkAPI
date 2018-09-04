@@ -3,7 +3,7 @@ from httplib2 import Http
 from oauth2client import file, client, tools
 from sqlalchemy import create_engine, asc, desc, func
 from sqlalchemy.orm import sessionmaker
-import os, inspect, sys, re
+import os, inspect, sys, re, json
 # direct import the database_setup module.
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
@@ -11,8 +11,29 @@ sys.path.insert(0, parent_dir)
 from database_setup import Base, Company
 
 
+
+# -----------------------------------------------------------------------------
+#                           Global Constants
+# -----------------------------------------------------------------------------
+SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
+SPREADSHEET_ID = '1fKG4iVnj9coxg2mwip4reD7Rt5eiBvlEDM-Hu84M3zE'
+RANGE_NAME = 'Sheet1!A4:E85'
+FAIR_ID = 1
+
+with open('{}/config.json'.format(parent_dir), 'r') as f:
+    config = json.load(f)
+
+postgres = config["POSTGRES"]
+
+engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
+                                                postgres["user"],
+                                                postgres["pw"],
+                                                postgres["endpoint"],
+                                                postgres["port"],
+                                                postgres["db"]),
+                                            connect_args={'sslmode':'require'})
+
 def get_db_connection():
-    engine = create_engine('sqlite:///../careertalk.db')
     Base.metadata.bind = engine
     DBSession = sessionmaker(bind=engine)
     db_session = DBSession()
@@ -30,9 +51,7 @@ def match_company_url(raw_url, pattern):
 
 
 def get_company_info():
-    SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-    SPREADSHEET_ID = '1SASWQ3XHN2IeSylfVgDQs-gv-Vg4DjmUkcnWuKVe3Tw'
-    RANGE_NAME = 'Sheet1!A4:E78'
+
     store = file.Storage('token.json')
     creds = store.get()
     if not creds or creds.invalid:
@@ -78,6 +97,7 @@ def insert_rows():
             type = 2
         else :
             type = 3
+
         if row[3].strip().lower() == 'bs':
             degree = 1
         elif row[3].strip().lower() == 'ms':
@@ -92,6 +112,7 @@ def insert_rows():
             degree = 6
         else:
             degree = 7
+
         if row[4].strip().lower() == 'yes':
             visa = 1
         elif row[4].strip().lower() == 'no':
@@ -99,16 +120,17 @@ def insert_rows():
         else:
             visa = 3
 
-        print(i, name)
+        print(i+1, name)
 
         if db_session.query(Company).filter(Company.name == name).\
-                                     filter(Company.fair_id == 2).count() == 0:
-            log_string = '''
-            name:{}, type:{}, degree:{}, visa:{}, url:{}
+                                     filter(Company.fair_id == FAIR_ID).count() == 0:
+
+            log_string = '''name:{}, type:{}, degree:{}, visa:{}, url:{}
             '''.format(name, type, degree, visa, urls[i])
+            print("adding: {}".format(log_string))
             company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                               degree=degree, visa=visa, company_url=urls[i],
-                              fair_id=2, description='')
+                              fair_id=FAIR_ID, description='')
             db_session.add(company)
             db_session.commit()
         else:
