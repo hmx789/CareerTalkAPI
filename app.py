@@ -32,8 +32,8 @@ engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["db"]))
 """
 
-engine = create_engine('sqlite:///careertalk.db', 
-                        connect_args={'check_same_thread': False}, 
+engine = create_engine('sqlite:///careertalk.db',
+                        connect_args={'check_same_thread': False},
                         echo=False)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)

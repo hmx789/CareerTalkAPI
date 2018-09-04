@@ -91,7 +91,6 @@ class Company(Base):
     fair_id = Column(Integer, ForeignKey('fair.id'))
     company_url = Column(String())
     fair = relationship('Fair')
-    fovorite = relationship('Favorite')
 
     @property
     def serialize(self):
@@ -116,12 +115,12 @@ class Company(Base):
         }
 
 
-class Favorite(Base):
-    __tablename__ = 'favorite_company'
-    id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('company_id'))
-    user_id = Column(Integer, ForeignKey('user_id'))
-    fair_id = Column(Integer, ForeignKey('fair_id'))
+# class Favorite(Base):
+#     __tablename__ = 'favorite_company'
+#     id = Column(Integer, primary_key=True)
+#     company_id = Column(Integer, ForeignKey('company_id'))
+#     user_id = Column(Integer, ForeignKey('user_id'))
+#     fair_id = Column(Integer, ForeignKey('fair_id'))
 
 
 class HiringType(Base):
@@ -142,14 +141,15 @@ class Visa(Base):
     type = Column(String(6), nullable=False)
 
 
-"""
+
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["user"],
                                                 postgres["pw"],
                                                 postgres["endpoint"],
                                                 postgres["port"],
-                                                postgres["db"]))
+                                                postgres["db"]),
+                                            connect_args={'sslmode':'require'})
 
-"""
-engine = create_engine('sqlite:///careertalk.db')
+
+#engine = create_engine('sqlite:///careertalk.db')
 Base.metadata.create_all(engine)
