@@ -90,6 +90,24 @@ def main():
     return "hello world"
 
 
+@app.route('/careertalk/support')
+def support_info():
+    html =  '''
+    <!DOCTYPE html>
+        <html>
+            <body>
+
+                <h1>CareerTalk Support</h1>
+                <p>Name: Seho Lim</p>
+                <p>Email: limseho657424@gmail.com </p>
+
+            </body>
+        </html>
+    '''
+    return html
+
+
+
 @app.route('/auth/google/callback', methods=['POST'])
 def oauth2callback():
     """Call back for Google Sign-In"""
