@@ -100,7 +100,6 @@ class Company(Base):
         visa = ['yes', 'no', 'maybe']
         majors = [major.strip() for major in self.hiring_majors.split(',')]
 
-
         return {
             'fair': self.fair.name,
             'fair_id': self.fair_id,

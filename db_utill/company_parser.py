@@ -16,9 +16,9 @@ from database_setup import Base, Company
 #                           Global Constants
 # -----------------------------------------------------------------------------
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-SPREADSHEET_ID = '1fKG4iVnj9coxg2mwip4reD7Rt5eiBvlEDM-Hu84M3zE'
+SPREADSHEET_ID = '1SASWQ3XHN2IeSylfVgDQs-gv-Vg4DjmUkcnWuKVe3Tw'
 RANGE_NAME = 'Sheet1!A4:E85'
-FAIR_ID = 1
+FAIR_ID = 2
 
 with open('{}/config.json'.format(parent_dir), 'r') as f:
     config = json.load(f)
@@ -76,21 +76,33 @@ def get_company_info():
     # print("============================================================")
     links_rows = links['sheets'][0]['data'][0]['rowData']
     pattern = re.compile('(//)(.+\.)(com|org|net|edu|gov|mil)')
-    urls = []
-    for val in links_rows:
+    # print(values)
+    for i, val in enumerate(links_rows):
         raw_url = val['values'][0]['hyperlink']
         url = match_company_url(raw_url, pattern)
-        urls.append(url)
-        # print(url)
-    return values, urls
+        values[i].append(url)
+        # print(values[i])
+    return values
 
 
 def insert_rows():
-    data, urls = get_company_info()
+    data = get_company_info()
     print("Adding a company . . .")
     db_session = get_db_connection()
+
+    companies_in_db = db_session.query(Company).\
+                                    filter(Company.fair_id == FAIR_ID).all()
+    companies_dict = {}
+    print('Companies in the db . . .')
+
+    # Construct {'name': 0 || 1} dictionary
+    for c in companies_in_db:
+        companies_dict[c.name] = 0
+
     for i, row in enumerate(data):
-        name = row[0]
+        name, url = row[0], row[4]
+        companies_dict[name] = 1 if name in companies_dict else 0
+
         if row[1].strip().lower() == 'int':
             type = 1
         elif row[1].strip().lower() == 'ft':
@@ -120,21 +132,29 @@ def insert_rows():
         else:
             visa = 3
 
-        print(i+1, name)
-
-        if db_session.query(Company).filter(Company.name == name).\
-                                     filter(Company.fair_id == FAIR_ID).count() == 0:
-
+        if name not in companies_dict:
             log_string = '''name:{}, type:{}, degree:{}, visa:{}, url:{}
-            '''.format(name, type, degree, visa, urls[i])
+            '''.format(name, type, degree, visa, row[4])
             print("adding: {}".format(log_string))
             company = Company(name=name, hiring_types=type, hiring_majors=row[2],
-                              degree=degree, visa=visa, company_url=urls[i],
+                              degree=degree, visa=visa, company_url=row[4],
                               fair_id=FAIR_ID, description='')
             db_session.add(company)
             db_session.commit()
         else:
-            print("The company already exists in our db.")
+            print("WARNING: {}:{} already exists in our db.".format(i+1, name))
+
+    # delete not participating companies
+    print('Seraching Companies that are no longer participating in ', FAIR_ID)
+    for key, val in companies_dict.items():
+        if val == 0:
+            print('Deleting {} on fair: {}'.format(key, FAIR_ID))
+            c = db_session.query(Company).filter(Company.name == key).filter(
+                Company.fair_id == FAIR_ID).one()
+            db_session.delete(c)
+            db_session.commit()
+
+    db_session.close()
 
 
 insert_rows()
