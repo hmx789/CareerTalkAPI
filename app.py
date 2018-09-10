@@ -222,7 +222,6 @@ def get_logo():
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
     companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
-    db_session.commit()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)
 
