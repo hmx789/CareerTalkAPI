@@ -6,9 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Company, Fair
 from requests_oauthlib import OAuth2Session
 from requests_oauthlib.compliance_fixes import linkedin_compliance_fix
+from oauth2client import client, crypt
 
 import json
-from oauth2client import client, crypt
 import httplib2
 import requests
 import pprint
@@ -96,16 +96,13 @@ def support_info():
     <!DOCTYPE html>
         <html>
             <body>
-
                 <h1>CareerTalk Support</h1>
                 <p>Name: Seho Lim</p>
                 <p>Email: limseho657424@gmail.com </p>
-
             </body>
         </html>
     '''
     return html
-
 
 
 @app.route('/auth/google/callback', methods=['POST'])
@@ -193,7 +190,6 @@ def linkedin_callback():
                                          authorization_response=request.url)
 
     login_session['oauth_token'] = token
-    print(token)
     return 'linkedin auth success.'
 
 
@@ -226,6 +222,7 @@ def get_logo():
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
     companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
+    db_session.commit()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)
 
