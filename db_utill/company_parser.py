@@ -16,9 +16,9 @@ from database_setup import Base, Company
 #                           Global Constants
 # -----------------------------------------------------------------------------
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-SPREADSHEET_ID = '1SASWQ3XHN2IeSylfVgDQs-gv-Vg4DjmUkcnWuKVe3Tw'
-RANGE_NAME = 'Sheet1!A4:E85'
-FAIR_ID = 2
+SPREADSHEET_ID = '1fKG4iVnj9coxg2mwip4reD7Rt5eiBvlEDM-Hu84M3zE'
+RANGE_NAME = 'Sheet1!A4:E100'
+FAIR_ID = 1
 
 with open('{}/config.json'.format(parent_dir), 'r') as f:
     config = json.load(f)
@@ -93,7 +93,6 @@ def insert_rows():
     companies_in_db = db_session.query(Company).\
                                     filter(Company.fair_id == FAIR_ID).all()
     companies_dict = {}
-    print('Companies in the db . . .')
 
     # Construct {'name': 0 || 1} dictionary
     for c in companies_in_db:
@@ -132,17 +131,20 @@ def insert_rows():
         else:
             visa = 3
 
-        if name not in companies_dict:
+        if companies_dict[name] == 1:
+            print("WARNING: {}:{} already exists in our db.".format(i+1, name))
+        else:
+            
             log_string = '''name:{}, type:{}, degree:{}, visa:{}, url:{}
             '''.format(name, type, degree, visa, row[4])
-            print("adding: {}".format(log_string))
+            print("**ADDING: {}".format(log_string))
             company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                               degree=degree, visa=visa, company_url=row[4],
                               fair_id=FAIR_ID, description='')
             db_session.add(company)
             db_session.commit()
-        else:
-            print("WARNING: {}:{} already exists in our db.".format(i+1, name))
+            companies_dict[name] = 1
+
 
     # delete not participating companies
     print('Seraching Companies that are no longer participating in ', FAIR_ID)
