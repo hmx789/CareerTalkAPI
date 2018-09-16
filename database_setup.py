@@ -114,8 +114,10 @@ class Company(Base):
         types = [['INT'], ['FT'], ['INT', 'FT']]
         visa = ['yes', 'no', 'maybe']
         majors = [major.strip() for major in self.hiring_majors.split(',')]
-        tables = db_session.query(CareerFairTable).filter(
-                                self.id == CareerFairTable.company_id).all()
+        tables = db_session.query(CareerFairTable)\
+            .filter(self.id == CareerFairTable.company_id)\
+            .filter(self.fair_id == CareerFairTable.fair_id)\
+            .all()
 
         tables_list = [t.table_number for t in tables]
 
