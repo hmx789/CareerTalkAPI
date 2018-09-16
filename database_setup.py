@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Time
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, sessionmaker
 import json
 import os, sys, inspect
 
@@ -12,6 +12,21 @@ with open('{}/config.json'.format(current_dir), 'r') as f:
 
 postgres = config["POSTGRES"]
 Base = declarative_base()
+
+
+engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
+                                                postgres["user"],
+                                                postgres["pw"],
+                                                postgres["endpoint"],
+                                                postgres["port"],
+                                                postgres["db"]),
+                                            connect_args={'sslmode':'require'})
+
+
+#engine = create_engine('sqlite:///careertalk.db')
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind=engine)
+db_session = DBSession()
 
 
 def _to_minutes(time):
@@ -99,8 +114,13 @@ class Company(Base):
         types = [['INT'], ['FT'], ['INT', 'FT']]
         visa = ['yes', 'no', 'maybe']
         majors = [major.strip() for major in self.hiring_majors.split(',')]
+        tables = db_session.query(CareerFairTable).filter(
+                                self.id == CareerFairTable.company_id).all()
+
+        tables_list = [t.table_number for t in tables]
 
         return {
+            'tables': tables_list,
             'fair': self.fair.name,
             'fair_id': self.fair_id,
             'visa': visa[self.visa-1],
@@ -112,6 +132,16 @@ class Company(Base):
             'name': self.name,
             'id': self.id,
         }
+
+
+class CareerFairTable(Base):
+    __tablename__ = 'fair_table'
+    id = Column(Integer, primary_key=True)
+    company_id = Column(Integer, ForeignKey('company.id'))
+    fair_id = Column(Integer, ForeignKey('fair.id'))
+    table_number = Column(Integer)
+    fair = relationship('Fair')
+    company = relationship('Company')
 
 
 # class Favorite(Base):
@@ -141,14 +171,4 @@ class Visa(Base):
 
 
 
-engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
-                                                postgres["user"],
-                                                postgres["pw"],
-                                                postgres["endpoint"],
-                                                postgres["port"],
-                                                postgres["db"]),
-                                            connect_args={'sslmode':'require'})
-
-
-#engine = create_engine('sqlite:///careertalk.db')
 Base.metadata.create_all(engine)

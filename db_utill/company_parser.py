@@ -4,21 +4,30 @@ from oauth2client import file, client, tools
 from sqlalchemy import create_engine, asc, desc, func
 from sqlalchemy.orm import sessionmaker
 import os, inspect, sys, re, json
+import sys
+
 # direct import the database_setup module.
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
-from database_setup import Base, Company
-
+from database_setup import Base, Company, CareerFairTable
 
 
 # -----------------------------------------------------------------------------
 #                           Global Constants
 # -----------------------------------------------------------------------------
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-SPREADSHEET_ID = '1fKG4iVnj9coxg2mwip4reD7Rt5eiBvlEDM-Hu84M3zE'
-RANGE_NAME = 'Sheet1!A4:E100'
-FAIR_ID = 1
+SPREADSHEET_ID = '1ngKTclEJo4m9D_TY4VwwOqDNa13CubbNmwQ20QJrOpE'
+RANGE_NAME = 'Sheet1!A4:F110'
+FAIR_ID = 2
+DEBUG = 0
+
+if len(sys.argv) > 1:
+    if str(sys.argv[1]) == "-d":
+        print('*** DEBUG MODE IS ON ***')
+        DEBUG = 1
+else :
+    print('*** PRODUCTION MODE IS ON ***')
 
 with open('{}/config.json'.format(parent_dir), 'r') as f:
     config = json.load(f)
@@ -33,11 +42,36 @@ engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["db"]),
                                             connect_args={'sslmode':'require'})
 
+# -----------------------------------------------------------------------------
+#                           Parsing Functions
+# -----------------------------------------------------------------------------
+
+
 def get_db_connection():
     Base.metadata.bind = engine
     DBSession = sessionmaker(bind=engine)
     db_session = DBSession()
     return db_session
+
+
+def _add_tables(name, s, session):
+    if len(s) == 0:
+        print('***Warning: No Table')
+        return
+    print("ADDING TABLES")
+    booths = [int(c.strip()) for c in s.split('&')]
+    company = session.query(Company).filter(Company.name == name).filter(
+        Company.fair_id == FAIR_ID).one()
+    for t in booths:
+        table = CareerFairTable(fair_id=FAIR_ID, company_id=company.id,
+                                table_number=t)
+        print('TABLE: fair: {}, company: {}, number: {}'.format(FAIR_ID,
+                                                                company.id,
+                                                                t))
+        if not DEBUG:
+            session.add(table)
+    if not DEBUG:
+        session.commit()
 
 
 def match_company_url(raw_url, pattern):
@@ -92,6 +126,8 @@ def insert_rows():
 
     companies_in_db = db_session.query(Company).\
                                     filter(Company.fair_id == FAIR_ID).all()
+
+
     companies_dict = {}
 
     # Construct {'name': 0 || 1} dictionary
@@ -130,20 +166,30 @@ def insert_rows():
             visa = 2
         else:
             visa = 3
-
+        print(row)
+        #_add_tables_temp(name, row[5], db_session)
         if companies_dict[name] == 1:
             print("WARNING: {}:{} already exists in our db.".format(i+1, name))
-        else:
-            
-            log_string = '''name:{}, type:{}, degree:{}, visa:{}, url:{}
-            '''.format(name, type, degree, visa, row[4])
-            print("**ADDING: {}".format(log_string))
-            company = Company(name=name, hiring_types=type, hiring_majors=row[2],
-                              degree=degree, visa=visa, company_url=row[4],
-                              fair_id=FAIR_ID, description='')
+            continue
+
+
+        log_string = '''name:{}, type:{}, degree:{}, visa:{}, booth:{} url:{}
+        '''.format(name, type, degree, visa, row[5], row[6])
+
+        print("**ADDING: {}".format(log_string))
+
+        company = Company(name=name, hiring_types=type, hiring_majors=row[2],
+                          degree=degree, visa=visa, company_url=row[6],
+                          fair_id=FAIR_ID, description='')
+
+        if not DEBUG:
             db_session.add(company)
             db_session.commit()
-            companies_dict[name] = 1
+
+        _add_tables(name, row[5], db_session)
+
+
+        companies_dict[name] = 1
 
 
     # delete not participating companies
@@ -153,8 +199,9 @@ def insert_rows():
             print('Deleting {} on fair: {}'.format(key, FAIR_ID))
             c = db_session.query(Company).filter(Company.name == key).filter(
                 Company.fair_id == FAIR_ID).one()
-            db_session.delete(c)
-            db_session.commit()
+            if not DEBUG:
+                db_session.delete(c)
+                db_session.commit()
 
     db_session.close()
 
