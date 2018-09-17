@@ -171,24 +171,16 @@ def insert_rows():
         if companies_dict[name] == 1:
             print("WARNING: {}:{} already exists in our db.".format(i+1, name))
             continue
-
-
         log_string = '''name:{}, type:{}, degree:{}, visa:{}, booth:{} url:{}
         '''.format(name, type, degree, visa, row[5], row[6])
-
         print("**ADDING: {}".format(log_string))
-
         company = Company(name=name, hiring_types=type, hiring_majors=row[2],
                           degree=degree, visa=visa, company_url=row[6],
                           fair_id=FAIR_ID, description='')
-
         if not DEBUG:
             db_session.add(company)
             db_session.commit()
-
         _add_tables(name, row[5], db_session)
-
-
         companies_dict[name] = 1
 
 
@@ -196,13 +188,21 @@ def insert_rows():
     print('Seraching Companies that are no longer participating in ', FAIR_ID)
     for key, val in companies_dict.items():
         if val == 0:
-            print('Deleting {} on fair: {}'.format(key, FAIR_ID))
+            print('Deleting company {} on fair: {}'.format(key, FAIR_ID))
             c = db_session.query(Company).filter(Company.name == key).filter(
                 Company.fair_id == FAIR_ID).one()
+
+            t = db_session.query(CareerFairTable)\
+                .filter(c.id == CareerFairTable.company_id)\
+                .filter(c.fair_id == CareerFairTable.fair_id)\
+                .all()
+            for table in t:
+                print('Deleting table {} on fair: {}'.format(table.id, FAIR_ID))
+                if not DEBUG:
+                    db_session.delete(table)
             if not DEBUG:
                 db_session.delete(c)
-                db_session.commit()
-
+            db_session.commit()
     db_session.close()
 
 
