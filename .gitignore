@@ -6,3 +6,4 @@ config.json
 careertalk.db
 linkedin_token.json
 *.db
+.vscode
