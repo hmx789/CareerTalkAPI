@@ -44,7 +44,6 @@ class User(Base):
     resume = Column(String(250))
     bio = Column(String(250))
 
-
     def serialize(self):
         type = ['student', 'faculty', 'corporate']
         return {
@@ -105,11 +104,15 @@ class Employer(Base):
     @property
     def serialize(self):
         return {
-            'name': self.name,
-            'found_year': self.found_year,
+            'logo_url': self.logo_url,
+            'company_url': self.company_url,
             'hq_city': self.hq_city,
-            'description': self.description
+            'found_year': self.found_year,
+            'description': self.description,
+            'name': self.name,
         }
+
+
 
 
 
