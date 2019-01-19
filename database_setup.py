@@ -46,7 +46,7 @@ class User(Base):
 
 
     def serialize(self):
-        type = ['student','faculty', 'corporate']
+        type = ['student', 'faculty', 'corporate']
         return {
             'id': self.id,
             'name': self.name,

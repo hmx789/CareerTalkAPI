@@ -21,20 +21,16 @@ with open('config.json', 'r') as f:
     config = json.load(f)
 
 postgres = config["POSTGRES"]
-"""
-use this one on production
-
 engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
                                                 postgres["user"],
                                                 postgres["pw"],
                                                 postgres["endpoint"],
                                                 postgres["port"],
                                                 postgres["db"]))
-"""
 
-engine = create_engine('sqlite:///careertalk.db',
-                        connect_args={'check_same_thread': False},
-                        echo=False)
+# engine = create_engine('sqlite:///careertalk.db',
+#                         connect_args={'check_same_thread': False},
+#                         echo=False)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
