@@ -3,7 +3,7 @@ from flask import session as login_session
 from flask.json import jsonify
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, User, Company, Fair
+from database_setup import User, Base, Company, Fair, Employer
 from requests_oauthlib import OAuth2Session
 from requests_oauthlib.compliance_fixes import linkedin_compliance_fix
 from oauth2client import client, crypt
@@ -228,6 +228,11 @@ def get_careerfairs():
     fair_list = [fair.serialize for fair in fairs]
     return jsonify(Careerfair=fair_list)
 
+@app.route('/employer')
+def get_employers():
+    employers = db_session.query(Employer).all()
+    employer_list = [e.serialize for e in employers]
+    return jsonify(Employer=employer_list)
 
 if __name__ == "__main__":
     app.secret_key = config['DEFAULT']['SECRET_KEY']

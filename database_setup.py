@@ -73,14 +73,12 @@ class Fair(Base):
 
     @property
     def serialize(self):
-        """Return object data in easily serializable format"""
-        companies = [company.serialize for company in self.companies]
+        # companies = [company.serialize for company in self.companies]
         return {
             'id': self.id,
             'name': self.name,
             'organization': self.organization,
             'description': self.description,
-            'companies': companies,
             'location': self.location,
             'date': {
                 'year': self.start_date.year,
@@ -92,6 +90,28 @@ class Fair(Base):
             'start_time_min': _to_minutes(self.start_time),
             'end_time': _to_minutes(self.end_time)
         }
+
+
+class Employer(Base):
+    __tablename__= 'employer'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+    found_year = Column(String(4))
+    hq_city = Column(String(50))
+    description = Column(String())
+    logo_url = Column(String())
+    company_url = Column(String())
+
+    @property
+    def serialize(self):
+        return {
+            'name': self.name,
+            'found_year': self.found_year,
+            'hq_city': self.hq_city,
+            'description': self.description
+        }
+
+
 
 
 class Company(Base):
