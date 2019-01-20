@@ -33,6 +33,16 @@ def _to_minutes(time):
     t = time.hour * 60 + time.minute
     return t
 
+class HiringType(Base):
+    __tablename__ = 'hiring_type'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(20), nullable=False)
+
+
+class Degree(Base):
+    __tablename__ = 'degree_type'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(20), nullable=False)
 
 class User(Base):
     __tablename__ = 'user'
@@ -113,8 +123,33 @@ class Employer(Base):
         }
 
 
+    # id integer NOT NULL DEFAULT nextval('employer_fair_id_seq'::regclass),
+    # employer_id integer NOT NULL,
+    # degree_req integer NOT NULL,
+    # hiring_type integer NOT NULL,
+    # visa_type integer NOT NULL,
+    # fair_id integer NOT NULL,
+    # recruiter_id integer,
+    # hiring_majors character varying COLLATE pg_catalog."default",
 
 
+class CareerFairEmployers(Base):
+    __tablename__ = 'employer_fair'
+    id = Column(Integer, primary_key=True)
+    employer_id = Column(Integer, ForeignKey('employer.id'), nullable=False)
+    fair_id = Column(Integer, ForeignKey('fair.id'), nullable=False)
+    degree_req = Column(Integer, ForeignKey('degree_type.id'), nullable=False)
+    hiring_types_id = Column(Integer, ForeignKey('hiring_type.id'), nullable=False)
+    hiring_majors = Column(String())
+    recruiter_id = Column(Integer, ForeignKey('recruiter.id'))
+
+    @property
+    def serialize(self):
+        return {
+            'hiring_types': self.hiring_types_id,
+            'degree': self.degree_req,
+            'id': self.id
+        }
 
 
 class Company(Base):
@@ -177,16 +212,7 @@ class CareerFairTable(Base):
 #     fair_id = Column(Integer, ForeignKey('fair_id'))
 
 
-class HiringType(Base):
-    __tablename__ = 'hiring_type'
-    id = Column(Integer, primary_key=True)
-    type = Column(String(20), nullable=False)
 
-
-class Degree(Base):
-    __tablename__ = 'degree_type'
-    id = Column(Integer, primary_key=True)
-    type = Column(String(20), nullable=False)
 
 
 class Visa(Base):
