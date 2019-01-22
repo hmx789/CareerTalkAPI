@@ -1,17 +1,12 @@
-from flask import Flask, redirect, request, make_response
-from flask import session as login_session
+from flask import Flask
 from flask.json import jsonify
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import User, Base, Fair, Employer, Company, CareerFairEmployer
-from requests_oauthlib import OAuth2Session
-from requests_oauthlib.compliance_fixes import linkedin_compliance_fix
-from oauth2client import client, crypt
 import json
-import httplib2
+import os
 
 app = Flask(__name__)
-import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 with open('config.json', 'r') as f:
