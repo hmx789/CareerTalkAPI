@@ -33,6 +33,13 @@ def _to_minutes(time):
     t = time.hour * 60 + time.minute
     return t
 
+
+class Visa(Base):
+    __tablename__ = 'visa_type'
+    id = Column(Integer, primary_key=True)
+    type = Column(String(6), nullable=False)
+
+
 class HiringType(Base):
     __tablename__ = 'hiring_type'
     id = Column(Integer, primary_key=True)
@@ -43,6 +50,7 @@ class Degree(Base):
     __tablename__ = 'degree_type'
     id = Column(Integer, primary_key=True)
     type = Column(String(20), nullable=False)
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -78,7 +86,6 @@ class Fair(Base):
     end_time = Column(Time, nullable=False)
     location = Column(String)
     organization = Column(String(250), nullable=False)
-    companies = relationship('Company')
 
     @property
     def serialize(self):
@@ -138,16 +145,33 @@ class CareerFairEmployers(Base):
     id = Column(Integer, primary_key=True)
     employer_id = Column(Integer, ForeignKey('employer.id'), nullable=False)
     fair_id = Column(Integer, ForeignKey('fair.id'), nullable=False)
-    degree_req = Column(Integer, ForeignKey('degree_type.id'), nullable=False)
-    hiring_types_id = Column(Integer, ForeignKey('hiring_type.id'), nullable=False)
-    hiring_majors = Column(String())
     recruiter_id = Column(Integer, ForeignKey('recruiter.id'))
+    visa_type = Column(Integer, ForeignKey('visa_type.id'))
+    degree_req = Column(Integer, ForeignKey('degree_type.id'), nullable=False)
+    hiring_type = Column(Integer, ForeignKey('hiring_type.id'), nullable=False)
+    hiring_majors = Column(String())
+    tables = Column(String())
 
+    employer = relationship('Employer')
+    degree = relationship('Degree')
+    visa = relationship('Visa')
+    hiring = relationship('HiringType')
+    fair = relationship('Fair')
     @property
     def serialize(self):
+        majors = [major.strip() for major in self.hiring_majors.split(',')]
+        degrees = [degree.strip() for degree in self.degree.type.split(',')]
+        hiring_types = [hiring_type.strip() for hiring_type in self.hiring.type.split(',')]
+        tables = [table.strip() for table in self.tables.split(',')] if self.tables is not None else []
+        employer = db_session.query(Employer).filter(self.employer_id == Employer.id).one()
         return {
-            'hiring_types': self.hiring_types_id,
-            'degree': self.degree_req,
+            'fair_name': self.fair.name,
+            'tables': tables,
+            'visa_support': self.visa.type,
+            'hiring_majors': majors,
+            'hiring_types': hiring_types,
+            'degree_requirements': degrees,
+            'employer': employer.serialize,
             'id': self.id
         }
 
@@ -202,24 +226,6 @@ class CareerFairTable(Base):
     table_number = Column(Integer)
     fair = relationship('Fair')
     company = relationship('Company')
-
-
-# class Favorite(Base):
-#     __tablename__ = 'favorite_company'
-#     id = Column(Integer, primary_key=True)
-#     company_id = Column(Integer, ForeignKey('company_id'))
-#     user_id = Column(Integer, ForeignKey('user_id'))
-#     fair_id = Column(Integer, ForeignKey('fair_id'))
-
-
-
-
-
-class Visa(Base):
-    __tablename__ = 'visa_type'
-    id = Column(Integer, primary_key=True)
-    type = Column(String(6), nullable=False)
-
 
 
 Base.metadata.create_all(engine)
