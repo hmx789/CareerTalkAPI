@@ -73,9 +73,6 @@ class Employer(Base):
         }
 
 
-
-
-
 class CareerFairEmployer(Base):
     __tablename__ = 'employer_fair'
     id = Column(Integer, primary_key=True)
