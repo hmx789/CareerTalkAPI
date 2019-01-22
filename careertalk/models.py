@@ -1,32 +1,6 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Time
-from sqlalchemy.orm import relationship, sessionmaker
-import json
-import os, sys, inspect
-
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-
-with open('{}/config.json'.format(current_dir), 'r') as f:
-    config = json.load(f)
-
-postgres = config["POSTGRES"]
-Base = declarative_base()
-
-
-engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
-                                                postgres["user"],
-                                                postgres["pw"],
-                                                postgres["endpoint"],
-                                                postgres["port"],
-                                                postgres["db"]),
-                                            connect_args={'sslmode':'require'})
-
-
-#engine = create_engine('sqlite:///careertalk.db')
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-db_session = DBSession()
+from careertalk import Base, db_session
+from sqlalchemy.orm import relationship
 
 
 def _to_minutes(time):
@@ -126,7 +100,6 @@ class CareerFairEmployer(Base):
         tables = [table.strip() for table in self.tables.split(',')] if self.tables is not None else []
 
         return {
-            'fair_name': self.fair.name,
             'tables': tables,
             'visa_support': visa.type,
             'hiring_majors': majors,
@@ -221,6 +194,3 @@ class CareerFairTable(Base):
     table_number = Column(Integer)
     fair = relationship('Fair')
     company = relationship('Company')
-
-
-Base.metadata.create_all(engine)

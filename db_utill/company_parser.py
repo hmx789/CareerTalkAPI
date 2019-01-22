@@ -1,16 +1,16 @@
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-from sqlalchemy import create_engine, asc, desc, func
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import os, inspect, sys, re, json
+import os, inspect, re, json
 import sys
 
 # direct import the database_setup module.
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
-from database_setup import Base, Company, CareerFairTable
+from careertalk.models import Base, Company, CareerFairTable
 
 
 # -----------------------------------------------------------------------------
