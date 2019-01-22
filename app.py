@@ -3,7 +3,7 @@ from flask import session as login_session
 from flask.json import jsonify
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
-from database_setup import User, Base, Company, Fair, Employer
+from database_setup import User, Base, Fair, Employer, Company, CareerFairEmployers
 from requests_oauthlib import OAuth2Session
 from requests_oauthlib.compliance_fixes import linkedin_compliance_fix
 from oauth2client import client, crypt
@@ -215,6 +215,10 @@ def get_logo():
     return "worked"
 
 
+# ------------------------------------------------------------------------------
+#                                V1 Endpoints
+# ------------------------------------------------------------------------------
+
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
     companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
@@ -228,11 +232,28 @@ def get_careerfairs():
     fair_list = [fair.serialize for fair in fairs]
     return jsonify(Careerfair=fair_list)
 
-@app.route('/employer')
-def get_employers():
-    employers = db_session.query(Employer).all()
-    employer_list = [e.serialize for e in employers]
-    return jsonify(Employer=employer_list)
+
+# ------------------------------------------------------------------------------
+#                                V2 Endpoints
+# ------------------------------------------------------------------------------
+
+@app.route('/v2/careerfairs')
+def v2_get_careerfairs():
+    fairs = db_session.query(Fair).all()
+    fair_list = [fair.serialize for fair in fairs]
+    return_obj = {
+        "fairs": fair_list,
+        "num_of_fairs": len(fair_list)
+    }
+    return jsonify(return_obj)
+
+
+@app.route('/v2/<int:fair_id>/employers', methods=['GET'])
+def v2_get_companies(fair_id):
+    companies = db_session.query(CareerFairEmployers).filter(CareerFairEmployers.fair_id == fair_id).all()
+    company_list = [company.serialize for company in companies]
+    return jsonify(Company=company_list)
+
 
 if __name__ == "__main__":
     app.secret_key = config['DEFAULT']['SECRET_KEY']
