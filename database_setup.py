@@ -75,37 +75,6 @@ class User(Base):
         }
 
 
-class Fair(Base):
-    __tablename__ = 'fair'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-    location = Column(String)
-    organization = Column(String(250), nullable=False)
-
-    @property
-    def serialize(self):
-        # companies = [company.serialize for company in self.companies]
-        return {
-            'id': self.id,
-            'name': self.name,
-            'organization': self.organization,
-            'description': self.description,
-            'location': self.location,
-            'date': {
-                'year': self.start_date.year,
-                'month': self.start_date.month,
-                'day': self.start_date.day
-            },
-            'start_date_min': self.start_date,
-            'end_date': self.end_date,
-            'start_time_min': _to_minutes(self.start_time),
-            'end_time': _to_minutes(self.end_time)
-        }
 
 
 class Employer(Base):
@@ -130,17 +99,10 @@ class Employer(Base):
         }
 
 
-    # id integer NOT NULL DEFAULT nextval('employer_fair_id_seq'::regclass),
-    # employer_id integer NOT NULL,
-    # degree_req integer NOT NULL,
-    # hiring_type integer NOT NULL,
-    # visa_type integer NOT NULL,
-    # fair_id integer NOT NULL,
-    # recruiter_id integer,
-    # hiring_majors character varying COLLATE pg_catalog."default",
 
 
-class CareerFairEmployers(Base):
+
+class CareerFairEmployer(Base):
     __tablename__ = 'employer_fair'
     id = Column(Integer, primary_key=True)
     employer_id = Column(Integer, ForeignKey('employer.id'), nullable=False)
@@ -152,27 +114,60 @@ class CareerFairEmployers(Base):
     hiring_majors = Column(String())
     tables = Column(String())
 
-    employer = relationship('Employer')
-    degree = relationship('Degree')
-    visa = relationship('Visa')
-    hiring = relationship('HiringType')
-    fair = relationship('Fair')
     @property
     def serialize(self):
-        majors = [major.strip() for major in self.hiring_majors.split(',')]
-        degrees = [degree.strip() for degree in self.degree.type.split(',')]
-        hiring_types = [hiring_type.strip() for hiring_type in self.hiring.type.split(',')]
-        tables = [table.strip() for table in self.tables.split(',')] if self.tables is not None else []
+        degree = db_session.query(Degree).filter(Degree.id == self.degree_req).one()
+        hiring_type = db_session.query(HiringType).filter(HiringType.id == self.hiring_type).one()
+        visa = db_session.query(Visa).filter(Visa.id == self.visa_type).one()
         employer = db_session.query(Employer).filter(self.employer_id == Employer.id).one()
+        majors = [major.strip() for major in self.hiring_majors.split(',')]
+        degrees = [degree.strip() for degree in degree.type.split(',')]
+        hiring_types = [hiring_type.strip() for hiring_type in hiring_type.type.split(',')]
+        tables = [table.strip() for table in self.tables.split(',')] if self.tables is not None else []
+
         return {
             'fair_name': self.fair.name,
             'tables': tables,
-            'visa_support': self.visa.type,
+            'visa_support': visa.type,
             'hiring_majors': majors,
             'hiring_types': hiring_types,
             'degree_requirements': degrees,
             'employer': employer.serialize,
             'id': self.id
+        }
+
+
+class Fair(Base):
+    __tablename__ = 'fair'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    description = Column(String)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    location = Column(String)
+    organization = Column(String(250), nullable=False)
+    employers = relationship(CareerFairEmployer, backref='fair', lazy=True)
+
+    @property
+    def serialize(self):
+        # companies = [company.serialize for company in self.companies]
+        return {
+            'id': self.id,
+            'name': self.name,
+            'organization': self.organization,
+            'description': self.description,
+            'location': self.location,
+            'date': {
+                'year': self.start_date.year,
+                'month': self.start_date.month,
+                'day': self.start_date.day
+            },
+            'start_date_min': self.start_date,
+            'end_date': self.end_date,
+            'start_time_min': _to_minutes(self.start_time),
+            'end_time': _to_minutes(self.end_time)
         }
 
 
