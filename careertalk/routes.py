@@ -68,3 +68,9 @@ def v2_get_companies(fair_id):
     company_list = [company.serialize for company in companies]
     fair = db_session.query(Fair).filter(Fair.id == fair_id).one()
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
+
+
+# todo
+@app.route('/v2/facebook')
+def facbook_login(token):
+    pass

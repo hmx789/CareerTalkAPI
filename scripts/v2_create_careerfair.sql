@@ -9,8 +9,11 @@ DROP TABLE IF EXISTS public.education;
 DROP TABLE IF EXISTS public.top_five_employers;
 DROP TABLE IF EXISTS public.student_like_employer;
 DROP TABLE IF EXISTS public.employer_fair;
+DROP TABLE IF EXISTS public.user;
+DROP TABLE IF EXISTS public.connection
 
-CREATE TABLE careerfair (
+
+CREATE TABLE public.careerfair (
 	id SERIAL PRIMARY KEY,
 	organization_id INTEGER REFERENCES college(id),
 	name VARCHAR(100) NOT NULL,
@@ -125,7 +128,23 @@ CREATE TABLE public.student_like_employer
 	date DATE NOT NULL
 );
 
-CREATE TABLE public.employer_fair
+CREATE TABLE public.student
+(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES user,
+    major VARCHAR(50),
+    college_id INTEGER REFERENCES college,
+    looking_hiring_type INTEGER REFERENCES hiring_type,
+    highest_degree INTEGER REFERENCES degree_type,
+    graduating_date DATE,
+    available_date DATE,
+    github_link VARCHAR(100),
+    linkedin_link VARCHAR(100),
+    portfolio_link VARCHAR,
+    school_email VARCHAR
+);
+
+CREATE TABLE employer_fair
 (
 	id SERIAL PRIMARY KEY,
 	employer_id INTEGER NOT NULL REFERENCES employer,
@@ -135,4 +154,27 @@ CREATE TABLE public.employer_fair
 	fair_id INTEGER NOT NULL REFERENCES fair,
 	recruiter_id INTEGER REFERENCES recruiter,
 	hiring_majors VARCHAR
+);
+
+CREATE TABLE public.user
+(
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    middle_name VARCHAR(50),
+    personal_email VARCHAR(255),
+    profile_img VARCHAR
+);
+
+CREATE TABLE public.connection
+(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES public.user,
+    public_id VARCHAR(255),
+    provider_id VARCHAR(255),
+    provider_user_id VARCHAR(255),
+    access_token VARCHAR(255),
+    secret VARCHAR(255),
+    display_name VARCHAR(255),
+    profile_url VARCHAR(512)
 );
