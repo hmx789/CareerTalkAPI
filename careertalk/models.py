@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Time
 from careertalk import Base, db_session
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 
 def _to_minutes(time):
@@ -29,26 +30,27 @@ class Degree(Base):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-    email = Column(String(250), nullable=False)
-    kind = Column(Integer)
-    picture = Column(String(250))
-    resume = Column(String(250))
-    bio = Column(String(250))
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    middle_name = Column(String(50))
+    personal_email = Column(String(255), unique=True)
+    profile_img = Column(String(), default='default_profile.png')
+    registered_on = Column(DateTime, default=datetime.utcnow)
 
+    def __repr__(self):
+        return f"User('{self.first_name}', '{self.personal_email}')"
+
+    @property
     def serialize(self):
-        type = ['student', 'faculty', 'corporate']
         return {
+            'personal_email': self.personal_email,
+            'profile_url': self.profile_img,
+            'registered_on': self.registered_on,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'middle_name': self.middle_name,
             'id': self.id,
-            'name': self.name,
-            'kind': type[self.kind],
-            'bio': self.bio,
-            'resume': self.resume,
-            'picture': self.picture,
-            'start_date': self.start_date
         }
-
-
 
 
 class Employer(Base):
@@ -58,8 +60,38 @@ class Employer(Base):
     found_year = Column(String(4))
     hq_city = Column(String(50))
     description = Column(String())
-    logo_url = Column(String())
+    logo_url = Column(String(), default='default_employer.png')
     company_url = Column(String())
+
+    def __repr__(self):
+        return f"Employer('{self.name}', '{self.company_url}')"
+
+    @property
+    def serialize(self):
+        return {
+            'logo_url': self.logo_url,
+            'company_url': self.company_url,
+            'hq_city': self.hq_city,
+            'found_year': self.found_year,
+            'description': self.description,
+            'name': self.name,
+        }
+
+
+class College(Base):
+    __tablename__ = 'college'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    address = Column(String(255))
+    state_id = Column(Integer, ForeignKey('state.id'))
+    city = Column(String(100))
+    zipcode = Column(String(5))
+    established = Column(Date)
+    website = Column(String(255))
+    logo_url = Column(String(255), default='default_college.png')
+
+    def __repr__(self):
+        return f"College('{self.name}')"
 
     @property
     def serialize(self):
@@ -85,6 +117,9 @@ class CareerFairEmployer(Base):
     hiring_majors = Column(String())
     tables = Column(String())
 
+    def __repr__(self):
+        return f"CareerFairEmployer('{self.hiring_majors}', '{self.employer_id}')"
+
     @property
     def serialize(self):
         degree = db_session.query(Degree).filter(Degree.id == self.degree_req).one()
@@ -107,6 +142,48 @@ class CareerFairEmployer(Base):
         }
 
 
+class CareerFair(Base):
+    __tablename__ = 'careerfair'
+    id = Column(Integer, primary_key=True)
+    organization_id = Column(Integer, ForeignKey('college.id'))
+    name = Column(String(100), nullable=False)
+    description = Column(String)
+    date = Column(DateTime, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    location = Column(String, nullable=False)
+    address = Column(String(200))
+    city = Column(String(50))
+    zipcode = Column(String(5))
+    other_organization = Column(String(50))
+    employers = relationship(CareerFairEmployer, backref='careerfair', lazy=True)
+
+    def __repr__(self):
+        return f"Careerfair('{self.name}')"
+
+    @property
+    def serialize(self):
+        # companies = [company.serialize for company in self.companies]
+        return {
+            'id': self.id,
+            'name': self.name,
+            'organization_id': self.organization_id,
+            'description': self.description,
+            'date': self.date,
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'location': self.location,
+            'address': self.address,
+            'city': self.city,
+            'zipcode': self.zipcode,
+            'other_organization': self.other_organization
+        }
+
+
+
+# ------------------------------------------------------------------------------
+#                                V1 models
+# ------------------------------------------------------------------------------
 class Fair(Base):
     __tablename__ = 'fair'
     id = Column(Integer, primary_key=True)
@@ -117,8 +194,11 @@ class Fair(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     location = Column(String)
-    organization = Column(String(250), nullable=False)
+    organization = Column(String(250))
     employers = relationship(CareerFairEmployer, backref='fair', lazy=True)
+
+    def __repr__(self):
+        return f"Fair('{self.name}', '{self.employer_id}')"
 
     @property
     def serialize(self):
