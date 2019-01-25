@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS public.connection
 CREATE TABLE public.careerfair (
 	id SERIAL PRIMARY KEY,
 	organization_id INTEGER REFERENCES college(id),
+	other_organization VARCHAR(50)
 	name VARCHAR(100) NOT NULL,
 	description VARCHAR,
 	date timestamptz NOT NULL,
@@ -34,7 +35,7 @@ CREATE TABLE public.employer
 	found_year VARCHAR(4),
 	hq_city VARCHAR(50),
 	description VARCHAR,
-	logo_url VARCHAR,
+	logo_url VARCHAR DEFAULT 'default_employer.png',
 	employer_url VARCHAR
 );
 
@@ -88,7 +89,8 @@ CREATE TABLE public.college
 	zipcode VARCHAR(5),
 	established DATE,
 	address VARCHAR(255),
-	website VARCHAR(255)
+	website VARCHAR(255),
+	logo_url VARCHAR(255) DEFAULT 'default_college.png'
 );
 
 CREATE TABLE public.degree
@@ -162,8 +164,9 @@ CREATE TABLE public.user
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     middle_name VARCHAR(50),
-    personal_email VARCHAR(255),
-    profile_img VARCHAR
+    personal_email VARCHAR(255) UNIQUE,
+    profile_img VARCHAR DEFAULT 'default_profile.png'
+    registered_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE public.connection
@@ -174,6 +177,7 @@ CREATE TABLE public.connection
     provider_id VARCHAR(255),
     provider_user_id VARCHAR(255),
     access_token VARCHAR(255),
+    id_token VARCHAR(255)
     secret VARCHAR(255),
     display_name VARCHAR(255),
     profile_url VARCHAR(512)

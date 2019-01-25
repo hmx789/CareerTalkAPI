@@ -5,4 +5,5 @@ token.json
 config.json
 careertalk.db
 linkedin_token.json
+careertalk-firebase-admin.json
 *.db
