@@ -7,3 +7,4 @@ careertalk.db
 linkedin_token.json
 careertalk-firebase-admin.json
 *.db
+.vscode
