@@ -1,6 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Time
-from careertalk import Base, db_session
-from sqlalchemy.orm import relationship
+from careertalk import db
 from datetime import datetime
 
 
@@ -9,33 +7,33 @@ def _to_minutes(time):
     return t
 
 
-class Visa(Base):
+class Visa(db.Model):
     __tablename__ = 'visa_type'
-    id = Column(Integer, primary_key=True)
-    type = Column(String(6), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(6), nullable=False)
 
 
-class HiringType(Base):
+class HiringType(db.Model):
     __tablename__ = 'hiring_type'
-    id = Column(Integer, primary_key=True)
-    type = Column(String(20), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(20), nullable=False)
 
 
-class Degree(Base):
+class Degree(db.Model):
     __tablename__ = 'degree_type'
-    id = Column(Integer, primary_key=True)
-    type = Column(String(20), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(20), nullable=False)
 
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'user'
-    id = Column(Integer, primary_key=True)
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
-    middle_name = Column(String(50))
-    personal_email = Column(String(255), unique=True)
-    profile_img = Column(String(), default='default_profile.png')
-    registered_on = Column(DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    middle_name = db.Column(db.String(50))
+    personal_email = db.Column(db.String(255), unique=True)
+    profile_img = db.Column(db.String(), default='default_profile.png')
+    registered_on = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f"User('{self.first_name}', '{self.personal_email}')"
@@ -53,15 +51,42 @@ class User(Base):
         }
 
 
-class Employer(Base):
-    __tablename__= 'employer'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
-    found_year = Column(String(4))
-    hq_city = Column(String(50))
-    description = Column(String())
-    logo_url = Column(String(), default='default_employer.png')
-    company_url = Column(String())
+class Recruiter(db.Model):
+    __tablename__ = 'recruiter'
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    middle_name = db.Column(db.String(100))
+    employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    work_email = db.Column(db.String(255))
+    work_phone = db.Column(db.String(16))
+
+    def __repr__(self):
+        return f"Recruiter('{self.first_name}')"
+
+    @property
+    def serialize(self):
+        return {
+            'email': self.work_email,
+            'phone': self.work_phone,
+            'profile_url': self.profile_img,
+            'registered_on': self.registered_on,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'middle_name': self.middle_name,
+            'id': self.id,
+        }
+
+
+class Employer(db.Model):
+    __tablename__ = 'employer'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    found_year = db.Column(db.String(4))
+    hq_city = db.Column(db.String(50))
+    description = db.Column(db.String())
+    logo_url = db.Column(db.String(), default='default_employer.png')
+    company_url = db.Column(db.String())
 
     def __repr__(self):
         return f"Employer('{self.name}', '{self.company_url}')"
@@ -78,17 +103,63 @@ class Employer(Base):
         }
 
 
-class College(Base):
+class Student(db.Model):
+    __tablename__ = 'student'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
+    looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
+    degree = db.Column(db.Integer, db.ForeignKey('degree_type'))
+    graduation_date = db.Column(db.Date)
+    available_date = db.Column(db.Date)
+    github_link = db.Column(db.String(255))
+    linkedin_link = db.Column(db.String(255))
+    portfolio_link = db.Column(db.String(255))
+    school_email = db.Column(db.String(255))
+    major = db.Column(db.String(50))
+
+    def __repr__(self):
+        return f"Student(user_id: '{self.user_id}')"
+
+    @property
+    def serialize(self):
+        user = User.query.filter_by(id=self.id).first()
+        college = College.query.filter_by(id=self.id).first()
+        persuing_degree = Degree.query.filter_by(id=self.degree).first()
+        persuing_hiring_type = HiringType.query.filter_by(id=self.looking_hiring_type).first()
+
+        majors = None
+        if self.major:
+            majors = [major for major in self.major.split(',')]
+
+        return {
+            'persuing_work_type': persuing_hiring_type,
+            'school_email': self.school_email,
+            'portfolio_link': self.portfolio_link,
+            'linkedin_link': self.linkedin_link,
+            'github_link': self.github_link,
+            'available_date': self.available_date,
+            'graduation_date': self.graduation_date,
+            'major': majors,
+            'persuing_degree': persuing_degree,
+            'college_name': college.name,
+            'last_name': user.last_name,
+            'first_name': user.first_name,
+            'id': self.id
+        }
+
+
+class College(db.Model):
     __tablename__ = 'college'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255))
-    address = Column(String(255))
-    state_id = Column(Integer, ForeignKey('state.id'))
-    city = Column(String(100))
-    zipcode = Column(String(5))
-    established = Column(Date)
-    website = Column(String(255))
-    logo_url = Column(String(255), default='default_college.png')
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    address = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    zipcode = db.Column(db.String(5))
+    state = db.Column(db.String(2))
+    established = db.Column(db.Date)
+    website = db.Column(db.String(255))
+    logo_url = db.Column(db.String(255), default='default_college.png')
 
     def __repr__(self):
         return f"College('{self.name}')"
@@ -97,35 +168,41 @@ class College(Base):
     def serialize(self):
         return {
             'logo_url': self.logo_url,
-            'company_url': self.company_url,
-            'hq_city': self.hq_city,
-            'found_year': self.found_year,
-            'description': self.description,
+            'web_url': self.website,
+            'established': self.established,
+            'state': self.state,
+            'zipcode': self.zipcode,
+            'city': self.city,
+            'address': self.address,
             'name': self.name,
+            'id': self.id
         }
 
 
-class CareerFairEmployer(Base):
+class CareerFairEmployer(db.Model):
     __tablename__ = 'employer_fair'
-    id = Column(Integer, primary_key=True)
-    employer_id = Column(Integer, ForeignKey('employer.id'), nullable=False)
-    fair_id = Column(Integer, ForeignKey('fair.id'), nullable=False)
-    recruiter_id = Column(Integer, ForeignKey('recruiter.id'))
-    visa_type = Column(Integer, ForeignKey('visa_type.id'))
-    degree_req = Column(Integer, ForeignKey('degree_type.id'), nullable=False)
-    hiring_type = Column(Integer, ForeignKey('hiring_type.id'), nullable=False)
-    hiring_majors = Column(String())
-    tables = Column(String())
+    id = db.Column(db.Integer, primary_key=True)
+    employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
+    fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'), nullable=False)
+    recruiter_id = db.Column(db.Integer, db.ForeignKey('recruiter.id'))
+    visa_type = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
+    degree_req = db.Column(db.Integer, db.ForeignKey('degree_type.id'), nullable=False)
+    hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'), nullable=False)
+    hiring_majors = db.Column(db.String())
+    tables = db.Column(db.String())
 
     def __repr__(self):
         return f"CareerFairEmployer('{self.hiring_majors}', '{self.employer_id}')"
 
     @property
     def serialize(self):
-        degree = db_session.query(Degree).filter(Degree.id == self.degree_req).one()
-        hiring_type = db_session.query(HiringType).filter(HiringType.id == self.hiring_type).one()
-        visa = db_session.query(Visa).filter(Visa.id == self.visa_type).one()
-        employer = db_session.query(Employer).filter(self.employer_id == Employer.id).one()
+        degree = Degree.query.filter_by(id=self.degree_req).first()
+        hiring_type = HiringType.query.filter_by(id=self.hiring_type)
+        visa = Visa.query.filter_by(id=self.visa_type)
+        employer = Employer.query.filter_by(id=self.employer_id)
+        # hiring_type = db_session.query(HiringType).filter(HiringType.id == self.hiring_type).one()
+        # visa = db_session.query(Visa).filter(Visa.id == self.visa_type).one()
+        # employer = db_session.query(Employer).filter(self.employer_id == Employer.id).one()
         majors = [major.strip() for major in self.hiring_majors.split(',')]
         degrees = [degree.strip() for degree in degree.type.split(',')]
         hiring_types = [hiring_type.strip() for hiring_type in hiring_type.type.split(',')]
@@ -142,21 +219,21 @@ class CareerFairEmployer(Base):
         }
 
 
-class CareerFair(Base):
+class CareerFair(db.Model):
     __tablename__ = 'careerfair'
-    id = Column(Integer, primary_key=True)
-    organization_id = Column(Integer, ForeignKey('college.id'))
-    name = Column(String(100), nullable=False)
-    description = Column(String)
-    date = Column(DateTime, nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-    location = Column(String, nullable=False)
-    address = Column(String(200))
-    city = Column(String(50))
-    zipcode = Column(String(5))
-    other_organization = Column(String(50))
-    employers = relationship(CareerFairEmployer, backref='careerfair', lazy=True)
+    id = db.Column(db.Integer, primary_key=True)
+    organization_id = db.Column(db.Integer, db.ForeignKey('college.id'))
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String)
+    date = db.Column(db.DateTime, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    location = db.Column(db.String, nullable=False)
+    address = db.Column(db.String(200))
+    city = db.Column(db.String(50))
+    zipcode = db.Column(db.String(5))
+    other_organization = db.Column(db.String(50))
+    # employers = db.relationship(CareerFairEmployer, backref='careerfair', lazy=True)
 
     def __repr__(self):
         return f"Careerfair('{self.name}')"
@@ -179,23 +256,76 @@ class CareerFair(Base):
             'other_organization': self.other_organization
         }
 
-
-
 # ------------------------------------------------------------------------------
 #                                V1 models
 # ------------------------------------------------------------------------------
-class Fair(Base):
+
+
+class Company(db.Model):
+    __tablename__ = 'company'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String())
+    hiring_types = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
+    hiring_majors = db.Column(db.String())
+    degree = db.Column(db.Integer, db.ForeignKey('degree_type.id'))
+    visa = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
+    fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'))
+    company_url = db.Column(db.String())
+
+    @property
+    def serialize(self):
+        degree = [['BS'], ['MS'], ['PhD'], ['BS', 'MS'], ['BS', 'PhD'],
+                  ['MS', 'PhD'], ['BS', 'MS', 'PhD']]
+        types = [['INT'], ['FT'], ['INT', 'FT']]
+        visa = ['yes', 'no', 'maybe']
+        majors = [major.strip() for major in self.hiring_majors.split(',')]
+        tables = CareerFairTable.query.filter_by(id=self.id, fair_id=self.fair_id).all()
+
+        # tables = db_session.query(CareerFairTable)\
+        #     .filter(self.id == CareerFairTable.company_id)\
+        #     .filter(self.fair_id == CareerFairTable.fair_id)\
+        #     .all()
+
+        tables_list = [t.table_number for t in tables]
+
+        return {
+            'tables': tables_list,
+            'fair': self.fair.name,
+            'fair_id': self.fair_id,
+            'visa': visa[self.visa-1],
+            'degree': degree[self.degree-1],
+            'hiring_majors': majors,
+            'hiring_types': types[self.hiring_types-1],
+            'description': self.description,
+            'company_url': self.company_url,
+            'name': self.name,
+            'id': self.id,
+        }
+
+
+class CareerFairTable(db.Model):
+    __tablename__ = 'fair_table'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'))
+    table_number = db.Column(db.Integer)
+    fair = db.relationship('Fair')
+    company = db.relationship('Company')
+
+
+class Fair(db.Model):
     __tablename__ = 'fair'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-    location = Column(String)
-    organization = Column(String(250))
-    employers = relationship(CareerFairEmployer, backref='fair', lazy=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    location = db.Column(db.String)
+    organization = db.Column(db.String(250))
+    companies = db.relationship('Company', backref='fair', lazy=True)
 
     def __repr__(self):
         return f"Fair('{self.name}', '{self.employer_id}')"
@@ -219,55 +349,3 @@ class Fair(Base):
             'start_time_min': _to_minutes(self.start_time),
             'end_time': _to_minutes(self.end_time)
         }
-
-
-class Company(Base):
-    __tablename__ = 'company'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String())
-    hiring_types = Column(Integer, ForeignKey('hiring_type.id'))
-    hiring_majors = Column(String())
-    degree = Column(Integer, ForeignKey('degree_type.id'))
-    visa = Column(Integer, ForeignKey('visa_type.id'))
-    fair_id = Column(Integer, ForeignKey('fair.id'))
-    company_url = Column(String())
-    fair = relationship('Fair')
-
-    @property
-    def serialize(self):
-        degree = [['BS'], ['MS'], ['PhD'], ['BS', 'MS'], ['BS', 'PhD'],
-                  ['MS', 'PhD'], ['BS', 'MS', 'PhD']]
-        types = [['INT'], ['FT'], ['INT', 'FT']]
-        visa = ['yes', 'no', 'maybe']
-        majors = [major.strip() for major in self.hiring_majors.split(',')]
-        tables = db_session.query(CareerFairTable)\
-            .filter(self.id == CareerFairTable.company_id)\
-            .filter(self.fair_id == CareerFairTable.fair_id)\
-            .all()
-
-        tables_list = [t.table_number for t in tables]
-
-        return {
-            'tables': tables_list,
-            'fair': self.fair.name,
-            'fair_id': self.fair_id,
-            'visa': visa[self.visa-1],
-            'degree': degree[self.degree-1],
-            'hiring_majors': majors,
-            'hiring_types': types[self.hiring_types-1],
-            'description': self.description,
-            'company_url': self.company_url,
-            'name': self.name,
-            'id': self.id,
-        }
-
-
-class CareerFairTable(Base):
-    __tablename__ = 'fair_table'
-    id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('company.id'))
-    fair_id = Column(Integer, ForeignKey('fair.id'))
-    table_number = Column(Integer)
-    fair = relationship('Fair')
-    company = relationship('Company')

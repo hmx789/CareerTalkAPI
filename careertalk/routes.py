@@ -1,6 +1,5 @@
 from careertalk import app
-from careertalk import db_session
-from careertalk.models import Fair, Company, CareerFairEmployer
+from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User
 from flask.json import jsonify
 from flask import request, make_response
 from flask_jwt_extended import (
@@ -45,14 +44,16 @@ def support_info():
 
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
-    companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
+    companies = Company.query.filter_by(id=fair_id).all()
+    # companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)
 
 
 @app.route('/careerfairs')
 def get_careerfairs():
-    fairs = db_session.query(Fair).all()
+    fairs = Fair.query.all()
+    # fairs = db_session.query(Fair).all()
     fair_list = [fair.serialize for fair in fairs]
     return jsonify(Careerfair=fair_list)
 
@@ -63,7 +64,7 @@ def get_careerfairs():
 
 @app.route('/v2/careerfairs')
 def v2_get_careerfairs():
-    fairs = db_session.query(Fair).all()
+    fairs = CareerFair.query.all()
     fair_list = [fair.serialize for fair in fairs]
     return_obj = {
         "fairs": fair_list,
@@ -74,9 +75,9 @@ def v2_get_careerfairs():
 
 @app.route('/v2/<int:fair_id>/employers', methods=['GET'])
 def v2_get_companies(fair_id):
-    companies = db_session.query(CareerFairEmployer).filter(CareerFairEmployer.fair_id == fair_id).all()
+    companies = CareerFairEmployer.filter_by(id=fair_id).all()
     company_list = [company.serialize for company in companies]
-    fair = db_session.query(Fair).filter(Fair.id == fair_id).one()
+    fair = CareerFair.filter_by(id == fair_id).first()
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
 
 
@@ -143,6 +144,8 @@ def google_signup():
     email = id_info['email']
     profile_img = id_info['picture']
 
+
+
     access_token = create_access_token(identity=email)
     # save this person to the Model and the database.
 
@@ -159,6 +162,3 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
-
-if __name__ == '__main__':
-    app.run()

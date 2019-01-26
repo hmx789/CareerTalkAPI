@@ -64,7 +64,6 @@ CREATE TABLE public.recruiter
 	first_name VARCHAR(100) NOT NULL,
 	last_name VARCHAR(100) NOT NULL,
 	middle_name VARCHAR(100),
-	email VARCHAR(255) NOT NULL,
 	employer_id INTEGER REFERENCES employer,
 	work_email VARCHAR(255) NOT NULL,
 	work_phone VARCHAR(16),
@@ -84,7 +83,7 @@ CREATE TABLE public.college
 (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(200) NOT NULL,
-	state_id integer REFERENCES state,
+	state VARCHAR(2),
 	city VARCHAR(100),
 	zipcode VARCHAR(5),
 	established DATE,
@@ -133,7 +132,7 @@ CREATE TABLE public.student_like_employer
 CREATE TABLE public.student
 (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES user,
+    user_id INTEGER NOT NULL REFERENCES user,
     major VARCHAR(50),
     college_id INTEGER REFERENCES college,
     looking_hiring_type INTEGER REFERENCES hiring_type,
@@ -143,7 +142,7 @@ CREATE TABLE public.student
     github_link VARCHAR(100),
     linkedin_link VARCHAR(100),
     portfolio_link VARCHAR,
-    school_email VARCHAR
+    school_email VARCHAR(100)
 );
 
 CREATE TABLE employer_fair

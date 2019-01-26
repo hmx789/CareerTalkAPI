@@ -1,32 +1,23 @@
 from flask import Flask
-from sqlalchemy import create_engine, asc, desc
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from flask_sqlalchemy import SQLAlchemy
 import json
 
 app = Flask(__name__)
+db = SQLAlchemy(app)
+app.debug = True
 
 with open('config.json', 'r') as f:
     config = json.load(f)
 
-Base = declarative_base()
-
 if app.debug:
-    engine = create_engine('sqlite:///careertalk.db',
-                            connect_args={'check_same_thread': False},
-                            echo=False)
-
+    app.config['SQLALCHEMY_DATABASE_URI'] = config['default']['local_db']
 else:
     postgres = config["postgres"]
-    engine = create_engine('postgresql://{}:{}@{}:{}/{}'.format(
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@{}:{}/{}'.format(
                                                     postgres["user"],
                                                     postgres["pw"],
                                                     postgres["endpoint"],
                                                     postgres["port"],
-                                                    postgres["db"]))
-
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-db_session = DBSession()
+                                                    postgres["db"])
 
 from careertalk import routes
