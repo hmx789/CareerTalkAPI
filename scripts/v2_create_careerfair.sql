@@ -64,7 +64,6 @@ CREATE TABLE public.recruiter
 	first_name VARCHAR(100) NOT NULL,
 	last_name VARCHAR(100) NOT NULL,
 	middle_name VARCHAR(100),
-	email VARCHAR(255) NOT NULL,
 	employer_id INTEGER REFERENCES employer,
 	work_email VARCHAR(255) NOT NULL,
 	work_phone VARCHAR(16),
@@ -84,7 +83,7 @@ CREATE TABLE public.college
 (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(200) NOT NULL,
-	state_id integer REFERENCES state,
+	state VARCHAR(2),
 	city VARCHAR(100),
 	zipcode VARCHAR(5),
 	established DATE,
