@@ -132,7 +132,7 @@ CREATE TABLE public.student_like_employer
 CREATE TABLE public.student
 (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES user,
+    user_id INTEGER NOT NULL REFERENCES user,
     major VARCHAR(50),
     college_id INTEGER REFERENCES college,
     looking_hiring_type INTEGER REFERENCES hiring_type,
@@ -142,7 +142,7 @@ CREATE TABLE public.student
     github_link VARCHAR(100),
     linkedin_link VARCHAR(100),
     portfolio_link VARCHAR,
-    school_email VARCHAR
+    school_email VARCHAR(100)
 );
 
 CREATE TABLE employer_fair

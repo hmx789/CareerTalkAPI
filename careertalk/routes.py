@@ -1,5 +1,5 @@
 from careertalk import app
-from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer
+from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User
 from flask.json import jsonify
 from flask import request, make_response
 from flask_jwt_extended import (
@@ -143,6 +143,8 @@ def google_signup():
     family_name = id_info['family_name']
     email = id_info['email']
     profile_img = id_info['picture']
+
+
 
     access_token = create_access_token(identity=email)
     # save this person to the Model and the database.

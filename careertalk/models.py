@@ -103,6 +103,52 @@ class Employer(db.Model):
         }
 
 
+class Student(db.Model):
+    __tablename__ = 'student'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
+    looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
+    degree = db.Column(db.Integer, db.ForeignKey('degree_type'))
+    graduation_date = db.Column(db.Date)
+    available_date = db.Column(db.Date)
+    github_link = db.Column(db.String(255))
+    linkedin_link = db.Column(db.String(255))
+    portfolio_link = db.Column(db.String(255))
+    school_email = db.Column(db.String(255))
+    major = db.Column(db.String(50))
+
+    def __repr__(self):
+        return f"Student(user_id: '{self.user_id}')"
+
+    @property
+    def serialize(self):
+        user = User.query.filter_by(id=self.id).first()
+        college = College.query.filter_by(id=self.id).first()
+        persuing_degree = Degree.query.filter_by(id=self.degree).first()
+        persuing_hiring_type = HiringType.query.filter_by(id=self.looking_hiring_type).first()
+
+        majors = None
+        if self.major:
+            majors = [major for major in self.major.split(',')]
+
+        return {
+            'persuing_work_type': persuing_hiring_type,
+            'school_email': self.school_email,
+            'portfolio_link': self.portfolio_link,
+            'linkedin_link': self.linkedin_link,
+            'github_link': self.github_link,
+            'available_date': self.available_date,
+            'graduation_date': self.graduation_date,
+            'major': majors,
+            'persuing_degree': persuing_degree,
+            'college_name': college.name,
+            'last_name': user.last_name,
+            'first_name': user.first_name,
+            'id': self.id
+        }
+
+
 class College(db.Model):
     __tablename__ = 'college'
     id = db.Column(db.Integer, primary_key=True)
