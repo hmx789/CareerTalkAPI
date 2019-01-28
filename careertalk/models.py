@@ -51,6 +51,22 @@ class User(db.Model):
         }
 
 
+class Connection(db.Model):
+    __tablename__ = 'connection'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    public_id = db.Column(db.String(255))
+    access_token = db.Column(db.String(255))
+    secret = db.Column(db.String(255))
+    id_token = db.Column(db.String(255))
+    token = db.Column(db.String)
+    os = db.Column(db.String(10))
+
+    def __repr__(self):
+        return f"Connection('{self.id}', '{self.user_id}')"
+
+
+
 class Recruiter(db.Model):
     __tablename__ = 'recruiter'
     id = db.Column(db.Integer, primary_key=True)
@@ -109,7 +125,7 @@ class Student(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
     looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
-    degree = db.Column(db.Integer, db.ForeignKey('degree_type'))
+    degree = db.Column(db.Integer, db.ForeignKey('degree_type.id'))
     graduation_date = db.Column(db.Date)
     available_date = db.Column(db.Date)
     github_link = db.Column(db.String(255))
@@ -315,7 +331,7 @@ class CareerFairTable(db.Model):
 
 
 class Fair(db.Model):
-    __tablename__ = 'fair'
+    #__tablename__ = 'fair'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String)

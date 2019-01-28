@@ -173,11 +173,9 @@ CREATE TABLE public.connection
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES public.user,
     public_id VARCHAR(255),
-    provider_id VARCHAR(255),
-    provider_user_id VARCHAR(255),
     access_token VARCHAR(255),
     id_token VARCHAR(255)
     secret VARCHAR(255),
-    display_name VARCHAR(255),
-    profile_url VARCHAR(512)
+    token VARCHAR,
+    os VARCHAR(10),
 );

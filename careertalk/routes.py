@@ -1,5 +1,5 @@
-from careertalk import app
-from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User
+from careertalk import app, db
+from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection
 from flask.json import jsonify
 from flask import request, make_response
 from flask_jwt_extended import (
@@ -11,6 +11,19 @@ from google.auth.transport import requests
 import sys
 
 jwt = JWTManager(app)
+db_session = db.session
+
+def _user_login(user, token):
+    data = jsonify({
+        'message': 'Returning User',
+        'user': user.serialize,
+
+    })
+    response = make_response(data, 200)
+    response.headers['UserToken'] = token
+
+    return response
+
 
 # ------------------------------------------------------------------------------
 #                                Routes
@@ -103,15 +116,12 @@ def google_signup():
     # Check if the request has Authorization header
     if not request.is_json:
         return make_response(jsonify({"msg": "Missing JSON in request"}), 400)
-
     try:
         token = request.headers['Authorization']
-
     except KeyError as err:
         print('The Authorization header is not included: ', err)
         response = make_response(jsonify({'message': 'Wrong request'}), 401)
         return response
-
     # Validate id token.
     try:
         id_info = id_token.verify_oauth2_token(
@@ -136,6 +146,12 @@ def google_signup():
         return response
 
     # check if this person already exists in the database.
+    check_user = User.query.filter_by(personal_email=id_info['email']).first()
+    if check_user:
+        # User exists on db. Then just return the existing token to the user.
+        connection = Connection.query.filter_by(user_id=check_user.id).first()
+        user_token = connection.token
+        return _user_login(check_user, user_token)
 
     userid = id_info['sub']
     username = id_info['name']
@@ -144,14 +160,26 @@ def google_signup():
     email = id_info['email']
     profile_img = id_info['picture']
 
+    # Create an User
+    user = User(first_name=given_name, last_name=family_name, personal_email=email, profile_img=profile_img)
+    # Store the new user to the database.
+    db_session.add(user)
+    # Flush the session to get the user.id
+    db_session.flush()
+    # Create a Student
+    student = Student(user_id=user.id)
 
+    # generate access token based on the identity
+    identity = {'email': email, 'username': username, 'pub_userid': userid}
+    access_token = create_access_token(identity=identity)
+    # Create a Connection
+    connection = Connection(user_id=user.id, public_id=userid, token=access_token)
 
-    access_token = create_access_token(identity=email)
-    # save this person to the Model and the database.
+    db_session.add(student)
+    db_session.add(connection)
+    db_session.commit()
 
-    print(access_token)
-
-    return jsonify(access_token)
+    return _user_login(user, access_token)
 
 # Protect a view with jwt_required, which requires a valid access token
 # in the request to access.
