@@ -57,7 +57,7 @@ def support_info():
 
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
-    companies = Company.query.filter_by(id=fair_id).all()
+    companies = Company.query.filter_by(fair_id=fair_id).all()
     # companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)

@@ -348,12 +348,14 @@ class Fair(db.Model):
 
     @property
     def serialize(self):
-        # companies = [company.serialize for company in self.companies]
+        """Return object data in easily serializable format"""
+        companies = [company.serialize for company in self.companies]
         return {
             'id': self.id,
             'name': self.name,
             'organization': self.organization,
             'description': self.description,
+            'companies': companies,
             'location': self.location,
             'date': {
                 'year': self.start_date.year,
