@@ -348,20 +348,15 @@ class Fair(db.Model):
 
     @property
     def serialize(self):
-        # companies = [company.serialize for company in self.companies]
+        comapnies = [company.serialize for company in self.companies]
         return {
             'id': self.id,
             'name': self.name,
             'organization': self.organization,
             'description': self.description,
-            'location': self.location,
-            'date': {
-                'year': self.start_date.year,
-                'month': self.start_date.month,
-                'day': self.start_date.day
-            },
-            'start_date_min': self.start_date,
+            'companies': comapnies,
+            'start_date': self.start_date,
             'end_date': self.end_date,
-            'start_time_min': _to_minutes(self.start_time),
-            'end_time': _to_minutes(self.end_time)
+            'start_time': self.start_time,
+            'end_time': self.end_time
         }
