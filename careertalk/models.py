@@ -126,7 +126,7 @@ class Student(db.Model):
     college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
     looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
     degree = db.Column(db.Integer, db.ForeignKey('degree_type.id'))
-    graduation_date = db.Column(db.Date)
+    graduating = db.Column(db.Date)
     available_date = db.Column(db.Date)
     github_link = db.Column(db.String(255))
     linkedin_link = db.Column(db.String(255))
@@ -140,7 +140,8 @@ class Student(db.Model):
     @property
     def serialize(self):
         user = User.query.filter_by(id=self.id).first()
-        college = College.query.filter_by(id=self.id).first()
+        college = College.query.filter_by(id=self.college_id).first()
+        college_name = 'None' if not college else college.name
         persuing_degree = Degree.query.filter_by(id=self.degree).first()
         persuing_hiring_type = HiringType.query.filter_by(id=self.looking_hiring_type).first()
 
@@ -155,10 +156,10 @@ class Student(db.Model):
             'linkedin_link': self.linkedin_link,
             'github_link': self.github_link,
             'available_date': self.available_date,
-            'graduation_date': self.graduation_date,
+            'graduating_date': self.graduating_date,
             'major': majors,
             'persuing_degree': persuing_degree,
-            'college_name': college.name,
+            'college_name': college_name,
             'last_name': user.last_name,
             'first_name': user.first_name,
             'id': self.id
