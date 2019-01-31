@@ -126,8 +126,8 @@ CREATE TABLE public.student_like_employer
 	id SERIAL PRIMARY KEY,
 	student_id INTEGER NOT NULL REFERENCES student,
 	employer_id INTEGER NOT NULL REFERENCES employer,
-	fair_id INTEGER NOT NULL REFERENCES fair,
-	date DATE NOT NULL
+	careerfair_id INTEGER NOT NULL REFERENCES careerfair,
+	liked_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE public.student
@@ -188,8 +188,9 @@ CREATE TABLE careerfair_employer
 	degree_type_id INTEGER NOT NULL REFERENCES degree_type,
 	hiring_type_id INTEGER NOT NULL REFERENCES hiring_type,
 	visa_type_id INTEGER NOT NULL REFERENCES visa_type,
-	fair_id INTEGER NOT NULL REFERENCES careerfair,
+	careerfair_id INTEGER NOT NULL REFERENCES careerfair,
 	recruiter_id INTEGER REFERENCES recruiter,
 	hiring_majors VARCHAR,
 	tables VARCHAR(20)
 );
+

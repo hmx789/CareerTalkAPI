@@ -197,14 +197,14 @@ class College(db.Model):
 
 
 class CareerFairEmployer(db.Model):
-    __tablename__ = 'employer_fair'
+    __tablename__ = 'careerfair_employer'
     id = db.Column(db.Integer, primary_key=True)
     employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
-    fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'), nullable=False)
+    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'), nullable=False)
     recruiter_id = db.Column(db.Integer, db.ForeignKey('recruiter.id'))
-    visa_type = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
-    degree_req = db.Column(db.Integer, db.ForeignKey('degree_type.id'), nullable=False)
-    hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'), nullable=False)
+    visa_type_id = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
+    degree_type_id = db.Column(db.Integer, db.ForeignKey('degree_type.id'), nullable=False)
+    hiring_type_id = db.Column(db.Integer, db.ForeignKey('hiring_type.id'), nullable=False)
     hiring_majors = db.Column(db.String())
     tables = db.Column(db.String())
 
@@ -213,10 +213,10 @@ class CareerFairEmployer(db.Model):
 
     @property
     def serialize(self):
-        degree = Degree.query.filter_by(id=self.degree_req).first()
-        hiring_type = HiringType.query.filter_by(id=self.hiring_type)
-        visa = Visa.query.filter_by(id=self.visa_type)
-        employer = Employer.query.filter_by(id=self.employer_id)
+        degree = Degree.query.filter_by(id=self.degree_type_id).first()
+        hiring_type = HiringType.query.filter_by(id=self.hiring_type_id).first()
+        visa = Visa.query.filter_by(id=self.visa_type_id).first()
+        employer = Employer.query.filter_by(id=self.employer_id).first()
         # hiring_type = db_session.query(HiringType).filter(HiringType.id == self.hiring_type).one()
         # visa = db_session.query(Visa).filter(Visa.id == self.visa_type).one()
         # employer = db_session.query(Employer).filter(self.employer_id == Employer.id).one()
@@ -250,7 +250,7 @@ class CareerFair(db.Model):
     city = db.Column(db.String(50))
     zipcode = db.Column(db.String(5))
     other_organization = db.Column(db.String(50))
-    # employers = db.relationship(CareerFairEmployer, backref='careerfair', lazy=True)
+    employers = db.relationship(CareerFairEmployer, backref='careerfair', lazy=True)
 
     def __repr__(self):
         return f"Careerfair('{self.name}')"
@@ -270,8 +270,21 @@ class CareerFair(db.Model):
             'address': self.address,
             'city': self.city,
             'zipcode': self.zipcode,
-            'other_organization': self.other_organization
+            'other_organization': self.other_organization,
+            'num_of_employers': len(self.employers)
         }
+
+
+class Like(db.Model):
+    __tablename__ = 'student_like_employer'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
+    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
+
+    def __repr__(self):
+        return f"Like('{self.id}')"
+
 
 # ------------------------------------------------------------------------------
 #                                V1 models

@@ -1,5 +1,5 @@
 from careertalk import app, db
-from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection
+from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection, Like
 from flask.json import jsonify
 from flask import request, make_response
 from flask_jwt_extended import (
@@ -88,9 +88,9 @@ def v2_get_careerfairs():
 
 @app.route('/v2/<int:fair_id>/employers', methods=['GET'])
 def v2_get_companies(fair_id):
-    companies = CareerFairEmployer.filter_by(id=fair_id).all()
+    companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
     company_list = [company.serialize for company in companies]
-    fair = CareerFair.filter_by(id == fair_id).first()
+    fair = CareerFair.query.filter_by(id=fair_id).first()
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
 
 
@@ -170,7 +170,7 @@ def google_signup():
     student = Student(user_id=user.id)
 
     # generate access token based on the identity
-    identity = {'email': email, 'username': username, 'pub_userid': userid}
+    identity = {'email': email, 'username': username, 'pub_userid': userid, 'user_id': user.id}
     access_token = create_access_token(identity=identity)
     # Create a Connection
     connection = Connection(user_id=user.id, public_id=userid, token=access_token)
@@ -190,3 +190,31 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
+
+# todo
+@app.route('/v2/like/<int:fair_id>/<int:employer_id>', methods=['POST'])
+@jwt_required
+def v2_like_company(fair_id, employer_id):
+
+    # first decode the jwt
+    current_user = get_jwt_identity()
+
+    # find the student id with the
+    student = Student.query.filter_by(user_id=current_user.user_id).first()
+    if not student:
+        print("You are not registered as a student", sys.exc_info()[1])
+        response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
+        return response
+
+    # like the company
+    # check if this user already liked the company
+
+    # CASE: already liked the company
+
+    # CASE: like company
+
+
+    companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
+    company_list = [company.serialize for company in companies]
+    fair = CareerFair.query.filter_by(id=fair_id).first()
+    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
