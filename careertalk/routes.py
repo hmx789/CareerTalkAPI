@@ -192,9 +192,9 @@ def protected():
 
 
 # todo
-@app.route('/v2/like/<int:fair_id>/<int:employer_id>', methods=['POST'])
+@app.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
 @jwt_required
-def v2_like_company(fair_id, employer_id):
+def v2_like_company(careerfair_id, employer_id):
 
     # first decode the jwt
     current_user = get_jwt_identity()
@@ -202,19 +202,28 @@ def v2_like_company(fair_id, employer_id):
     # find the student id with the
     student = Student.query.filter_by(user_id=current_user.user_id).first()
     if not student:
-        print("You are not registered as a student", sys.exc_info()[1])
+        print("This user is not a student. Can't like employers")
         response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
         return response
 
-    # like the company
     # check if this user already liked the company
-
+    like = Like.query\
+        .filter_by(student_id=student.id)\
+        .filter_by(employer_id=employer_id)\
+        .filter_by(careerfair_id=careerfair_id).first()
     # CASE: already liked the company
+    if like:
+        print("Can't like the same employer more than once")
+        response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
+        return response
 
     # CASE: like company
+    new_like = Like(student_id=student.id, employer_id=employer_id, careerfair_id=careerfair_id)
+    print("new like created. student_id={}, employer_id={} careerfair_id={}".format(student.id,
+                                                                                    employer_id,
+                                                                                    careerfair_id))
+    db_session.add(new_like)
+    db_session.commit(new_like)
 
-
-    companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
-    company_list = [company.serialize for company in companies]
-    fair = CareerFair.query.filter_by(id=fair_id).first()
-    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
+    response = make_response(jsonify({'message': 'Succesfully liked an employer'}), 200)
+    return response

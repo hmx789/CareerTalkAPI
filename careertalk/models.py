@@ -126,7 +126,7 @@ class Student(db.Model):
     college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
     looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
     degree = db.Column(db.Integer, db.ForeignKey('degree_type.id'))
-    graduating = db.Column(db.Date)
+    graduating_date = db.Column(db.Date)
     available_date = db.Column(db.Date)
     github_link = db.Column(db.String(255))
     linkedin_link = db.Column(db.String(255))
