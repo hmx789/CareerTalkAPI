@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS public.degree;
 DROP TABLE IF EXISTS public.education;
 DROP TABLE IF EXISTS public.top_five_employers;
 DROP TABLE IF EXISTS public.student_like_employer;
+DROP TABLE IF EXISTS public.careerfair_employer;
 DROP TABLE IF EXISTS public.employer_fair;
 DROP TABLE IF EXISTS public.user;
 DROP TABLE IF EXISTS public.connection
@@ -19,7 +20,7 @@ CREATE TABLE public.careerfair (
 	other_organization VARCHAR(50)
 	name VARCHAR(100) NOT NULL,
 	description VARCHAR,
-	date timestamptz NOT NULL,
+	date date NOT NULL,
 	start_time timestamptz NOT NULL,
 	end_time timestamptz NOT NULL,
 	location VARCHAR(100) NOT NULL,
@@ -178,4 +179,17 @@ CREATE TABLE public.connection
     secret VARCHAR(255),
     token VARCHAR,
     os VARCHAR(10),
+);
+
+CREATE TABLE careerfair_employer
+(
+	id SERIAL PRIMARY KEY,
+	employer_id INTEGER NOT NULL REFERENCES employer,
+	degree_type_id INTEGER NOT NULL REFERENCES degree_type,
+	hiring_type_id INTEGER NOT NULL REFERENCES hiring_type,
+	visa_type_id INTEGER NOT NULL REFERENCES visa_type,
+	fair_id INTEGER NOT NULL REFERENCES careerfair,
+	recruiter_id INTEGER REFERENCES recruiter,
+	hiring_majors VARCHAR,
+	tables VARCHAR(20)
 );
