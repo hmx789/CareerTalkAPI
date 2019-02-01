@@ -90,27 +90,12 @@ def v2_get_careerfairs():
 def v2_get_companies(fair_id):
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
     company_list = [company.serialize for company in companies]
-    fair = CareerFair.query.filter_by(id=fair_id).first()
-    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
+    fair = CareerFair.query.filter_by(id=fair_id).first().serialize
+
+    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
 
 
-# todo
-@app.route('/v2/social_login/facebook')
-def facbook_login():
-    pass
-
-@app.route('/getToken')
-def auth():
-
-    token = request.headers['Authorization']
-    print(token)
-    payload = token.decode(jwt=token, key=app.secret_key)
-    return make_response('it worked!', 400)
-
-
-# Provide a method to create access tokens. The create_access_token()
-# function is used to actually generate the token, and you can return
-# it to the caller however you choose.
+# Provide a method to create access tokens.
 @app.route('/glogin', methods=['POST'])
 def google_signup():
     # Check if the request has Authorization header

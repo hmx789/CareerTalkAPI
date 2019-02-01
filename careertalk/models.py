@@ -217,9 +217,6 @@ class CareerFairEmployer(db.Model):
         hiring_type = HiringType.query.filter_by(id=self.hiring_type_id).first()
         visa = Visa.query.filter_by(id=self.visa_type_id).first()
         employer = Employer.query.filter_by(id=self.employer_id).first()
-        # hiring_type = db_session.query(HiringType).filter(HiringType.id == self.hiring_type).one()
-        # visa = db_session.query(Visa).filter(Visa.id == self.visa_type).one()
-        # employer = db_session.query(Employer).filter(self.employer_id == Employer.id).one()
         majors = [major.strip() for major in self.hiring_majors.split(',')]
         degrees = [degree.strip() for degree in degree.type.split(',')]
         hiring_types = [hiring_type.strip() for hiring_type in hiring_type.type.split(',')]
@@ -232,6 +229,7 @@ class CareerFairEmployer(db.Model):
             'hiring_types': hiring_types,
             'degree_requirements': degrees,
             'employer': employer.serialize,
+            'careerfair_id': self.careerfair_id,
             'id': self.id
         }
 

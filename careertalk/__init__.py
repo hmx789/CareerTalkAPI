@@ -19,7 +19,7 @@ app.config['social_google'] = {
     'client_secret': config['social']['google']['client_secret']
 }
 
-if app.debug:
+if not app.debug:
     print('****************** DEBUG MODE ******************')
     app.config['SQLALCHEMY_DATABASE_URI'] = config['default']['local_db']
 else:

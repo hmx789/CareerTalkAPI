@@ -1,20 +1,25 @@
-DROP TABLE IF EXISTS public.careerfair;
-DROP TABLE IF EXISTS public.careerfair_table;
-DROP TABLE IF EXISTS public.note_on_employer;
-DROP TABLE IF EXISTS public.recruiter;
-DROP TABLE IF EXISTS public.state;
-DROP TABLE IF EXISTS public.college;
-DROP TABLE IF EXISTS public.degree;
-DROP TABLE IF EXISTS public.education;
-DROP TABLE IF EXISTS public.top_five_employers;
-DROP TABLE IF EXISTS public.student_like_employer;
-DROP TABLE IF EXISTS public.careerfair_employer;
-DROP TABLE IF EXISTS public.employer_fair;
-DROP TABLE IF EXISTS public.user;
-DROP TABLE IF EXISTS public.connection;
+DROP TABLE IF EXISTS careerfair;
+DROP TABLE IF EXISTS careerfair_table;
+DROP TABLE IF EXISTS note_on_employer;
+DROP TABLE IF EXISTS recruiter;
+DROP TABLE IF EXISTS state;
+DROP TABLE IF EXISTS college;
+DROP TABLE IF EXISTS degree;
+DROP TABLE IF EXISTS education;
+DROP TABLE IF EXISTS top_five_employers;
+DROP TABLE IF EXISTS student_like_employer;
+DROP TABLE IF EXISTS careerfair_employer;
+DROP TABLE IF EXISTS employer_fair;
+DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS connection;
+DROP TABLE IF EXISTS employer;
+DROP TABLE IF EXISTS student;
+DROP TABLE IF EXISTS hiring_type;
+DROP TABLE IF EXISTS degree_type;
+DROP TABLE IF EXISTS visa_type;
 
 
-CREATE TABLE public.careerfair (
+CREATE TABLE careerfair (
 	id SERIAL PRIMARY KEY,
 	organization_id INTEGER REFERENCES college(id),
 	other_organization VARCHAR(50),
@@ -29,7 +34,7 @@ CREATE TABLE public.careerfair (
 	zipcode VARCHAR(5)
 );
 
-CREATE TABLE public.employer
+CREATE TABLE employer
 (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(50) NOT NULL,
@@ -41,7 +46,7 @@ CREATE TABLE public.employer
 );
 
 
-CREATE TABLE public.careerfair_table
+CREATE TABLE careerfair_table
 (
     id SERIAL PRIMARY KEY,
     employer_id integer NOT NULL REFERENCES employer,
@@ -49,7 +54,7 @@ CREATE TABLE public.careerfair_table
     table_number integer
 );
 
-CREATE TABLE public.note_on_employer
+CREATE TABLE note_on_employer
 (
 	id SERIAL PRIMARY KEY,
 	employer_fair_id integer NOT NULL REFERENCES employer,
@@ -59,7 +64,7 @@ CREATE TABLE public.note_on_employer
 	content text
 );
 
-CREATE TABLE public.recruiter
+CREATE TABLE recruiter
 (
 	id SERIAL PRIMARY KEY,
 	first_name VARCHAR(100) NOT NULL,
@@ -71,7 +76,7 @@ CREATE TABLE public.recruiter
 );
 
 
-CREATE TABLE public.state
+CREATE TABLE state
 (
 	id SERIAL PRIMARY KEY,
 	state_code VARCHAR(2) NOT NULL,
@@ -80,7 +85,7 @@ CREATE TABLE public.state
 );
 
 
-CREATE TABLE public.college
+CREATE TABLE college
 (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(200) NOT NULL,
@@ -93,14 +98,14 @@ CREATE TABLE public.college
 	logo_url VARCHAR(255) DEFAULT 'default_college.png'
 );
 
-CREATE TABLE public.degree
+CREATE TABLE degree
 (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(10) NOT NULL
 
 );
 
-CREATE TABLE public.education
+CREATE TABLE education
 (
 	id SERIAL PRIMARY KEY,
 	school_id INTEGER NOT NULL REFERENCES college,
@@ -109,7 +114,7 @@ CREATE TABLE public.education
 	other VARCHAR(255)
 );
 
-CREATE TABLE public.top_five_employers
+CREATE TABLE top_five_employers
 (
 	id SERIAL PRIMARY KEY,
 	top1 INTEGER NOT NULL REFERENCES employer,
@@ -121,7 +126,7 @@ CREATE TABLE public.top_five_employers
 	date DATE NOT NULL
 );
 
-CREATE TABLE public.student_like_employer
+CREATE TABLE student_like_employer
 (
 	id SERIAL PRIMARY KEY,
 	student_id INTEGER NOT NULL REFERENCES student,
@@ -130,7 +135,7 @@ CREATE TABLE public.student_like_employer
 	liked_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE public.student
+CREATE TABLE student
 (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES user,
@@ -147,7 +152,7 @@ CREATE TABLE public.student
     school_email VARCHAR(100)
 );
 
-CREATE TABLE public.employer_fair
+CREATE TABLE employer_fair
 (
 	id SERIAL PRIMARY KEY,
 	employer_id INTEGER NOT NULL REFERENCES employer,
@@ -159,7 +164,7 @@ CREATE TABLE public.employer_fair
 	hiring_majors VARCHAR
 );
 
-CREATE TABLE public.user
+CREATE TABLE user
 (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
@@ -170,7 +175,7 @@ CREATE TABLE public.user
     registered_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE public.connection
+CREATE TABLE connection
 (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES user,
@@ -182,7 +187,7 @@ CREATE TABLE public.connection
     os VARCHAR(10)
 );
 
-CREATE TABLE public.careerfair_employer
+CREATE TABLE careerfair_employer
 (
 	id SERIAL PRIMARY KEY,
 	employer_id INTEGER NOT NULL REFERENCES employer,
@@ -195,19 +200,19 @@ CREATE TABLE public.careerfair_employer
 	tables VARCHAR(20)
 );
 
-CREATE TABLE public.hiring_type
+CREATE TABLE hiring_type
 (
     id SERIAL PRIMARY KEY,
     type VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE public.degree_type
+CREATE TABLE degree_type
 (
     id SERIAL PRIMARY KEY,
     type VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE public.visa_type
+CREATE TABLE visa_type
 (
     id SERIAL PRIMARY KEY,
     type VARCHAR(6) NOT NULL
