@@ -139,6 +139,8 @@ def google_signup():
         user_token = connection.token
         return _user_login(check_user, user_token)
 
+
+
     userid = id_info['sub']
     username = id_info['name']
     given_name = id_info['given_name']
@@ -157,7 +159,7 @@ def google_signup():
 
     # generate access token based on the identity
     identity = {'email': email, 'username': username, 'pub_userid': userid, 'user_id': user.id}
-    access_token = create_access_token(identity=identity)
+    access_token = create_access_token(identity=identity, expires_delta=False)
     # Create a Connection
     connection = Connection(user_id=user.id, public_id=userid, token=access_token)
 
@@ -184,9 +186,8 @@ def v2_like_company(careerfair_id, employer_id):
 
     # first decode the jwt
     current_user = get_jwt_identity()
-
-    # find the student id with the
-    student = Student.query.filter_by(user_id=current_user.user_id).first()
+    print(current_user)
+    student = Student.query.filter_by(user_id=current_user["user_id"]).first()
     if not student:
         print("This user is not a student. Can't like employers")
         response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
@@ -197,10 +198,12 @@ def v2_like_company(careerfair_id, employer_id):
         .filter_by(student_id=student.id)\
         .filter_by(employer_id=employer_id)\
         .filter_by(careerfair_id=careerfair_id).first()
-    # CASE: already liked the company
+    # CASE: already liked the company then delete the like
     if like:
-        print("Can't like the same employer more than once")
-        response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
+        print("Unlike the employer")
+        db_session.delete(like)
+        db_session.commit()
+        response = make_response(jsonify({'message': 'Unlike the employer .'}), 200)
         return response
 
     # CASE: like company
@@ -209,7 +212,7 @@ def v2_like_company(careerfair_id, employer_id):
                                                                                     employer_id,
                                                                                     careerfair_id))
     db_session.add(new_like)
-    db_session.commit(new_like)
+    db_session.commit()
 
     response = make_response(jsonify({'message': 'Succesfully liked an employer'}), 200)
     return response
