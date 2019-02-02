@@ -7,6 +7,12 @@ def _to_minutes(time):
     return t
 
 
+def _format_time(time):
+    suffix = 'PM' if time.hour >= 12 else 'AM'
+    hour = time.hour-12 if time.hour >= 13 else time.hour
+    return "{}:{} {}".format(hour, time.strftime("%M"), suffix)
+
+
 class Visa(db.Model):
     __tablename__ = 'visa_type'
     id = db.Column(db.Integer, primary_key=True)
@@ -255,15 +261,16 @@ class CareerFair(db.Model):
 
     @property
     def serialize(self):
-        # companies = [company.serialize for company in self.companies]
+        formatted_start_time = _format_time(self.start_time)
+        formatted_end_time = _format_time(self.end_time)
         return {
             'id': self.id,
             'name': self.name,
             'organization_id': self.organization_id,
             'description': self.description,
-            'date': self.date,
-            'start_time': self.start_time,
-            'end_time': self.end_time,
+            'date': self.date.strftime("%m/%d/%Y"),
+            'start_time': formatted_start_time,
+            'end_time': formatted_end_time,
             'location': self.location,
             'address': self.address,
             'city': self.city,
