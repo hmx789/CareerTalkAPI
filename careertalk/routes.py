@@ -186,7 +186,6 @@ def v2_like_company(careerfair_id, employer_id):
 
     # first decode the jwt
     current_user = get_jwt_identity()
-    print(current_user)
     student = Student.query.filter_by(user_id=current_user["user_id"]).first()
     if not student:
         print("This user is not a student. Can't like employers")
