@@ -294,6 +294,38 @@ class Like(db.Model):
         return f"Like('{self.id}')"
 
 
+class Top5(db.Model):
+    __tablename__ = 'top_five_employers'
+    id = db.Column(db.Integer, primary_key=True)
+    top1 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top2 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top3 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top4 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top5 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
+    updated_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"Top5('{self.id}')"
+
+    @property
+    def serialize(self):
+        employer1 = Employer.query.get(self.top1)
+        employer2 = Employer.query.get(self.top2)
+        employer3 = Employer.query.get(self.top3)
+        employer4 = Employer.query.get(self.top4)
+        employer5 = Employer.query.get(self.top5)
+        careerfair = CareerFair.query.get(self.careerfair_id)
+
+        return {
+            'top1': employer1.serialize,
+            'top2': employer2.serialize,
+            'top3': employer3.serialize,
+            'top4': employer4.serialize,
+            'top5': employer5.serialize,
+            'careerfair': careerfair.serialize
+        }
+
 # ------------------------------------------------------------------------------
 #                                V1 models
 # ------------------------------------------------------------------------------

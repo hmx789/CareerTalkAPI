@@ -117,13 +117,13 @@ CREATE TABLE education
 CREATE TABLE top_five_employers
 (
 	id SERIAL PRIMARY KEY,
-	top1 INTEGER NOT NULL REFERENCES employer,
-	top2 INTEGER NOT NULL REFERENCES employer,
-	top3 INTEGER NOT NULL REFERENCES employer,
-	top4 INTEGER NOT NULL REFERENCES employer,
-	top5 INTEGER NOT NULL REFERENCES employer,
-	fair_id INTEGER NOT NULL REFERENCES fair,
-	date DATE NOT NULL
+	top1 INTEGER REFERENCES employer,
+	top2 INTEGER REFERENCES employer,
+	top3 INTEGER REFERENCES employer,
+	top4 INTEGER REFERENCES employer,
+	top5 INTEGER REFERENCES employer,
+	careerfair_id INTEGER REFERENCES careerfair,
+	updated_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE student_like_employer
