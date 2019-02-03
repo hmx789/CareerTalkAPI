@@ -302,34 +302,29 @@ class Top5(db.Model):
     top3 = db.Column(db.Integer, db.ForeignKey('employer.id'))
     top4 = db.Column(db.Integer, db.ForeignKey('employer.id'))
     top5 = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    fair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
-
+    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
+    updated_on = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f"Top5('{self.id}')"
 
     @property
     def serialize(self):
-        company1 = Employer.query.get(self.top1)
-        company2 = Employer.query.get(self.top2)
-        company3 = Employer.query.get(self.top3)
-        company4 = Employer.query.get(self.top4)
-        company5 = Employer.query.get(self.top5)
+        employer1 = Employer.query.get(self.top1)
+        employer2 = Employer.query.get(self.top2)
+        employer3 = Employer.query.get(self.top3)
+        employer4 = Employer.query.get(self.top4)
+        employer5 = Employer.query.get(self.top5)
+        careerfair = CareerFair.query.get(self.careerfair_id)
 
         return {
-            'top1': self.top1,
-            'top2': self.top2,
-            'top3': self.top3,
-            'top4': self.top4,
-            'top5': self.top5,
-            'career_id': self.fair_id
-
-
+            'top1': employer1.serialize,
+            'top2': employer2.serialize,
+            'top3': employer3.serialize,
+            'top4': employer4.serialize,
+            'top5': employer5.serialize,
+            'careerfair': careerfair.serialize
         }
-
-
-        pass
-
 
 # ------------------------------------------------------------------------------
 #                                V1 models

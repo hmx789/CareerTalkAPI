@@ -254,9 +254,8 @@ def v2_like_company(careerfair_id, employer_id):
     return response
 
 
-
-
-@app.route('/v2/<int:careerfair_id>/top5', methods=['POST'])
+@app.route('/v2/<int:careerfair_id>/top5', methods=['GET'])
 @jwt_required
 def top5_company(careerfair_id):
-    pass
+    top = Top5.query.filter_by(careerfair_id=careerfair_id).first()
+    return jsonify(top.serialize)
