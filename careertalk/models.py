@@ -294,6 +294,43 @@ class Like(db.Model):
         return f"Like('{self.id}')"
 
 
+class Top5(db.Model):
+    __tablename__ = 'top_five_employers'
+    id = db.Column(db.Integer, primary_key=True)
+    top1 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top2 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top3 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top4 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    top5 = db.Column(db.Integer, db.ForeignKey('employer.id'))
+    fair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
+
+
+    def __repr__(self):
+        return f"Top5('{self.id}')"
+
+    @property
+    def serialize(self):
+        company1 = Employer.query.get(self.top1)
+        company2 = Employer.query.get(self.top2)
+        company3 = Employer.query.get(self.top3)
+        company4 = Employer.query.get(self.top4)
+        company5 = Employer.query.get(self.top5)
+
+        return {
+            'top1': self.top1,
+            'top2': self.top2,
+            'top3': self.top3,
+            'top4': self.top4,
+            'top5': self.top5,
+            'career_id': self.fair_id
+
+
+        }
+
+
+        pass
+
+
 # ------------------------------------------------------------------------------
 #                                V1 models
 # ------------------------------------------------------------------------------

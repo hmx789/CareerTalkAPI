@@ -1,5 +1,5 @@
 from careertalk import app, db
-from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection, Like
+from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection, Like, Top5
 from flask.json import jsonify
 from flask import request, make_response
 from flask_jwt_extended import (
@@ -256,10 +256,7 @@ def v2_like_company(careerfair_id, employer_id):
 
 
 
-@app.route('/v2/<int:careerfair_id>top5', methods=['POST'])
+@app.route('/v2/<int:careerfair_id>/top5', methods=['POST'])
 @jwt_required
 def top5_company(careerfair_id):
-    likes = Like.query.filter_by(careerfair_id=careerfair_id).all()
-
-
-
+    pass
