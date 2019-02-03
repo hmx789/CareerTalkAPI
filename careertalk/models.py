@@ -237,7 +237,7 @@ class CareerFairEmployer(db.Model):
             'degree_requirements': degrees,
             'employer': employer.serialize,
             'careerfair_id': self.careerfair_id,
-            'id': self.id
+            '_id': self.id
         }
 
 
@@ -255,6 +255,7 @@ class CareerFair(db.Model):
     city = db.Column(db.String(50))
     zipcode = db.Column(db.String(5))
     other_organization = db.Column(db.String(50))
+    map_url = db.Column(db.String())
     employers = db.relationship(CareerFairEmployer, backref='careerfair', lazy=True)
 
     def __repr__(self):
@@ -277,6 +278,7 @@ class CareerFair(db.Model):
             'city': self.city,
             'zipcode': self.zipcode,
             'other_organization': self.other_organization,
+            'map_url': self.map_url,
             'num_of_employers': len(self.employers)
         }
 
