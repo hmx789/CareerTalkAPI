@@ -26,6 +26,7 @@ CREATE TABLE public.careerfair (
 	location VARCHAR(100) NOT NULL,
 	address VARCHAR(200),
 	city VARCHAR(50),
+	map_url VARCHAR,
 	zipcode VARCHAR(5)
 );
 
