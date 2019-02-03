@@ -122,6 +122,7 @@ class Employer(db.Model):
             'found_year': self.found_year,
             'description': self.description,
             'name': self.name,
+            'id': self.id
         }
 
 

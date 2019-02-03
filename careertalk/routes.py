@@ -25,6 +25,11 @@ def _user_login(user, token):
 
     return response
 
+def _get_student(user):
+    student = Student.query.filter_by(user_id=user["user_id"]).first()
+    return student
+
+
 
 # ------------------------------------------------------------------------------
 #                                Routes
@@ -87,10 +92,41 @@ def v2_get_careerfairs():
     return jsonify(return_obj)
 
 
-@app.route('/v2/<int:fair_id>/employers', methods=['GET'])
-def v2_get_companies(fair_id):
+@app.route('/v2/<int:fair_id>/anon_user/employers', methods=['GET'])
+def v2_get_companies_anonuser(fair_id):
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
     company_list = [company.serialize for company in companies]
+    fair = CareerFair.query.filter_by(id=fair_id).first().serialize
+    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
+
+
+@app.route('/v2/<int:fair_id>/employers', methods=['GET'])
+@jwt_required
+def v2_get_companies(fair_id):
+    current_user = get_jwt_identity()
+    student = _get_student(current_user)
+    if not student:
+        response = make_response(jsonify({'message': 'This user is not student'}))
+        return response
+    companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
+
+    # Get liked company and make them as a set
+    liked_companies = Like.query.filter_by(student_id=student.id).all()
+    liked_company_ids = set()
+
+    # Iterate over the liked_companies list and put id into the set.
+    for liked_company in liked_companies:
+        liked_company_ids.add(liked_company.employer_id)
+
+    # list to return the company list.
+    company_list = []
+
+    # iterate over the companies and add 'is_liked' key val pair if user liked the company.
+    for company in companies:
+        c = company.serialize
+        c["is_liked"] = True if c["employer"]["id"] in liked_company_ids else False
+        company_list.append(c)
+
     fair = CareerFair.query.filter_by(id=fair_id).first().serialize
 
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
@@ -99,6 +135,7 @@ def v2_get_companies(fair_id):
 # Provide a method to create access tokens.
 @app.route('/glogin', methods=['POST'])
 def google_signup():
+
     # Check if the request has Authorization header
     if not request.is_json:
         return make_response(jsonify({"msg": "Missing JSON in request"}), 400)
@@ -134,17 +171,19 @@ def google_signup():
     # check if this person already exists in the database.
     check_user = User.query.filter_by(personal_email=id_info['email']).first()
     if check_user:
+        print("The current user already exists")
         # User exists on db. Then just return the existing token to the user.
         connection = Connection.query.filter_by(user_id=check_user.id).first()
         user_token = connection.token
         return _user_login(check_user, user_token)
 
-    userid = id_info['sub']
-    username = id_info['name']
-    given_name = id_info['given_name']
-    family_name = id_info['family_name']
-    email = id_info['email']
-    profile_img = id_info['picture']
+    data = request.get_json()
+    userid = data['id']
+    username = data['name']
+    given_name = data['givenName']
+    family_name = data['familyName']
+    email = data['email']
+    profile_img = data['photo']
 
     # Create an User
     user = User(first_name=given_name, last_name=family_name, personal_email=email, profile_img=profile_img)
@@ -157,7 +196,7 @@ def google_signup():
 
     # generate access token based on the identity
     identity = {'email': email, 'username': username, 'pub_userid': userid, 'user_id': user.id}
-    access_token = create_access_token(identity=identity)
+    access_token = create_access_token(identity=identity, expires_delta=False)
     # Create a Connection
     connection = Connection(user_id=user.id, public_id=userid, token=access_token)
 
@@ -184,9 +223,7 @@ def v2_like_company(careerfair_id, employer_id):
 
     # first decode the jwt
     current_user = get_jwt_identity()
-
-    # find the student id with the
-    student = Student.query.filter_by(user_id=current_user.user_id).first()
+    student = Student.query.filter_by(user_id=current_user["user_id"]).first()
     if not student:
         print("This user is not a student. Can't like employers")
         response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
@@ -197,10 +234,12 @@ def v2_like_company(careerfair_id, employer_id):
         .filter_by(student_id=student.id)\
         .filter_by(employer_id=employer_id)\
         .filter_by(careerfair_id=careerfair_id).first()
-    # CASE: already liked the company
+    # CASE: already liked the company then delete the like
     if like:
-        print("Can't like the same employer more than once")
-        response = make_response(jsonify({'message': 'Only student can like employers.'}), 401)
+        print("Unlike the employer")
+        db_session.delete(like)
+        db_session.commit()
+        response = make_response(jsonify({'message': 'Unlike the employer .'}), 200)
         return response
 
     # CASE: like company
@@ -209,7 +248,16 @@ def v2_like_company(careerfair_id, employer_id):
                                                                                     employer_id,
                                                                                     careerfair_id))
     db_session.add(new_like)
-    db_session.commit(new_like)
+    db_session.commit()
 
     response = make_response(jsonify({'message': 'Succesfully liked an employer'}), 200)
     return response
+
+
+@app.route('/v2/<int:careerfair_id>top5', methods=['POST'])
+@jwt_required
+def top5_company(careerfair_id):
+    likes = Like.query.filter_by(careerfair_id=careerfair_id).all()
+
+
+
