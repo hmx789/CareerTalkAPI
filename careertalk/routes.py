@@ -1,4 +1,4 @@
-from careertalk import app, db
+from careertalk import app, db, version
 from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection, Like, Top5
 from flask.json import jsonify
 from flask import request, make_response
@@ -28,7 +28,6 @@ def _user_login(user, token):
 def _get_student(user):
     student = Student.query.filter_by(user_id=user["user_id"]).first()
     return student
-
 
 
 # ------------------------------------------------------------------------------
@@ -111,7 +110,7 @@ def v2_get_companies(fair_id):
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
 
     # Get liked company and make them as a set
-    liked_companies = Like.query.filter_by(student_id=student.id).all()
+    liked_companies = Like.query.filter_by(student_id=student.id).filter_by(careerfair_id=fair_id).all()
     liked_company_ids = set()
 
     # Iterate over the liked_companies list and put id into the set.
@@ -260,3 +259,10 @@ def top5_company(careerfair_id):
     top = Top5.query.filter_by(careerfair_id=careerfair_id).first()
     return jsonify(top.serialize)
 
+
+# todo
+# Route
+# return version.
+@app.route('/careertalk/version', methods=['GET'])
+def version_check():
+    return jsonify({'version': version})
