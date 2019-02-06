@@ -1,7 +1,7 @@
-from careertalk import app, db
+from careertalk import app, db, version
 from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection, Like, Top5
 from flask.json import jsonify
-from flask import request, make_response
+from flask import request, make_response, render_template
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token,
     get_jwt_identity
@@ -30,7 +30,6 @@ def _get_student(user):
     return student
 
 
-
 # ------------------------------------------------------------------------------
 #                                Routes
 # ------------------------------------------------------------------------------
@@ -44,22 +43,17 @@ def main():
 
 @app.route('/careertalk/support')
 def support_info():
-    html =  '''
-    <!DOCTYPE html>
-        <html>
-            <body>
-                <h1>CareerTalk Support</h1>
-                <p>Name: Seho Lim</p>
-                <p>Email: limseho657424@gmail.com </p>
-            </body>
-        </html>
-    '''
-    return html
+    return render_template('contact.html')
 
+
+@app.route('/careertalk/private_policy')
+def private_policy():
+    return render_template('private_policy.html')
 
 # ------------------------------------------------------------------------------
 #                                V1 Endpoints
 # ------------------------------------------------------------------------------
+
 
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
@@ -111,7 +105,7 @@ def v2_get_companies(fair_id):
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
 
     # Get liked company and make them as a set
-    liked_companies = Like.query.filter_by(student_id=student.id).all()
+    liked_companies = Like.query.filter_by(student_id=student.id).filter_by(careerfair_id=fair_id).all()
     liked_company_ids = set()
 
     # Iterate over the liked_companies list and put id into the set.
@@ -260,3 +254,10 @@ def top5_company(careerfair_id):
     top = Top5.query.filter_by(careerfair_id=careerfair_id).first()
     return jsonify(top.serialize)
 
+
+# todo
+# Route
+# return version.
+@app.route('/careertalk/version', methods=['GET'])
+def version_check():
+    return jsonify({'version': version})

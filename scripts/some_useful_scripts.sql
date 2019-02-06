@@ -1,0 +1,1 @@
+select e.id, e.name, sle.careerfair_id from student_like_employer sle inner join employer e on e.id = sle.employer_id where sle.student_id = 6 order by careerfair_id;

@@ -18,6 +18,7 @@ app.config['social_google'] = {
     'client_id': config['social']['google']['client_id'],
     'client_secret': config['social']['google']['client_secret']
 }
+version = config['version']
 
 if not app.debug:
     print('****************** DEBUG MODE ******************')
