@@ -18,17 +18,69 @@ class Visa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(6), nullable=False)
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'type': self.type.lower()
+        }
+
+    def get_visa_id(self, visa_type):
+        lower = visa_type.lower()
+        visas = Visa.query.all()
+        for v in visas:
+            visa = v.serialize
+            if visa.type == lower:
+                return visa.id
+        print("Could not find {} in Visa".format(visa_type))
+        return None
+
+
 
 class HiringType(db.Model):
     __tablename__ = 'hiring_type'
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(20), nullable=False)
 
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'type': self.type.lower()
+        }
+
+    def get_hiring_id(self, hiring_type):
+        lower = hiring_type.lower()
+        hiring_types = self.query.all()
+        for h in hiring_types:
+            hiring = h.serialize
+            if [s.strip() for s in hiring.type.split] == [s.strip() for s in lower.split(',')]:
+                return hiring.id
+        print("Could not find {} in HiringType".format(hiring_type))
+        return None
+
 
 class Degree(db.Model):
     __tablename__ = 'degree_type'
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(20), nullable=False)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'type': self.type.lower()
+        }
+
+    def get_degree_id(self, degree_type):
+        lower = degree_type.lower()
+        degress = self.query.all()
+        for d in degress:
+            degree = d.serialize
+            if [s.strip() for s in degree.type.split] == [s.strip() for s in lower.split(',')]:
+                return degree.id
+        print("Could not find {} in Degree".format(degree_type))
+        return None
 
 
 class User(db.Model):
@@ -103,7 +155,7 @@ class Recruiter(db.Model):
 class Employer(db.Model):
     __tablename__ = 'employer'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
     found_year = db.Column(db.String(4))
     hq_city = db.Column(db.String(50))
     description = db.Column(db.String())
@@ -239,6 +291,7 @@ class CareerFairEmployer(db.Model):
             'careerfair_id': self.careerfair_id,
             '_id': self.id
         }
+
 
 
 class CareerFair(db.Model):

@@ -33,7 +33,7 @@ CREATE TABLE public.careerfair (
 CREATE TABLE public.employer
 (
 	id SERIAL PRIMARY KEY,
-	name VARCHAR(50) NOT NULL,
+	name VARCHAR(100) NOT NULL,
 	found_year VARCHAR(4),
 	hq_city VARCHAR(50),
 	description VARCHAR,

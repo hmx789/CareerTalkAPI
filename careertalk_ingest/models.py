@@ -2,7 +2,7 @@ from oauth2client import file, client, tools
 from googleapiclient.discovery import build
 from httplib2 import Http
 from datetime import time, datetime
-from careertalk.models import Employer, CareerFairEmployer, Fair, CareerFair, College
+from careertalk.models import Employer, CareerFairEmployer, Fair, CareerFair, College, Visa, Degree, HiringType
 import json, re
 
 
@@ -103,6 +103,7 @@ class CareerFairIngest:
         return CareerFair.query.filter_by(name=self.job['name']).first()
 
     def make_employer(self, name, url):
+        print("making employer")
         return Employer(name=name, company_url=url)
 
     def get_org(self):
@@ -121,8 +122,8 @@ class CareerFairIngest:
         start_times = JOB['start_time']
         end_times = JOB['end_time']
         date = datetime(dates[0], dates[1], dates[2])
-        start_time = time(start_times[0], start_times[1])
-        end_time = time(end_times[0], end_times[1])
+        start_time = datetime(dates[0], dates[1], dates[2], hour=start_times[0], minute=start_times[1])
+        end_time = datetime(dates[0], dates[1], dates[2], hour=end_times[0], minute=end_times[1])
         location = JOB['location']
         address = JOB['address']
         city = JOB['city']
@@ -139,16 +140,46 @@ class CareerFairIngest:
         return careerfair
 
     def make_careerfair_employer(self, columns, cf_id, e_id, tables):
-        visa_type = columns[0]
-        degree_type = columns[1]
-        hiring_type = columns[2]
-        hiring_majors = columns[3]
+
+        # This part might be redundant if we know how exactly string is formatted on the google sheet.
+        visa_type = columns[0].lower()
+        print(visa_type)
+        if visa_type == 'no':
+            visa_type_id = 2
+        elif visa_type == 'yes':
+            visa_type_id = 1
+        else:
+            visa_type_id = 3
+
+        degree_types = set(d.strip() for d in columns[1].split(','))
+        degree_types_sets_from_db = []
+        degrees = Degree.query.all()
+        for d in degrees:
+            serial = d.serialize
+            degree_types_sets_from_db.append(set(s.strip()) for s in serial['type'].split(','))
+        degree_type_id = 1
+        for id, degree_tup in enumerate(degree_types_sets_from_db):
+            if degree_types == degree_tup:
+                degree_type_id = id+1
+        hiring_types = [h.strip() for h in columns[2].split(',')]
+        if len(hiring_types) > 1:
+            hiring_type_id = 3
+            hiring_type_string = "FT, INT"
+        else:
+            hiring_type_string = hiring_types[0].upper()
+            hiring_type_id = HiringType.query.filter_by(type=hiring_type_string).first().id
+        print(hiring_type_string)
+
+        hiring_majors = [m.strip() for m in columns[3].split(',')]
+        hiring_majors_str = ', '.join(hiring_majors)
+        print(hiring_majors_str)
+
         return CareerFairEmployer(employer_id=e_id,
                                   careerfair_id=cf_id,
-                                  visa_type=visa_type,
-                                  degree_type=degree_type,
-                                  hiring_majors=hiring_majors,
-                                  hiring_type=hiring_type,
+                                  visa_type_id=visa_type_id,
+                                  degree_type_id=degree_type_id,
+                                  hiring_majors=hiring_majors_str,
+                                  hiring_type_id=hiring_type_id,
                                   tables=tables
                                   )
 
@@ -179,32 +210,36 @@ class CareerFairIngest:
         self.add_data(careerfair, True, debug)
 
         for i, row in enumerate(careerfair_employers):
+
             name = row[0]
             url = row[5]
-
+            print("ADDING {}: {}, {}".format(i, name, url))
             seleced_columns = (row[4], row[3], row[1], row[2])
-            if len(row) < 6:
+            if len(row) < 7:
                 print("No table information")
                 tables = None
             else:
                 tables = row[6]
 
-            print("{}: {}, {}".format(i, name, url))
             # insert Employer to the table.
             employer = self.make_employer(name, url)
 
             self.db_session.add(employer)
+            print("Succesfully Added Employer!")
             self.db_session.flush()
 
-            # inser CareerFairEmployer
+            # insert CareerFairEmployer
             careerfair_employer = self.make_careerfair_employer(seleced_columns,
                                                                 careerfair.id,
                                                                 employer.id,
                                                                 tables)
             self.db_session.add(careerfair_employer)
 
-        self.db_session.commit()
 
+
+            self.db_session.commit()
+
+        print("DONE!!!!")
 
 
 # Super Mini Manual Test.
