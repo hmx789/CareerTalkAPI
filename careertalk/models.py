@@ -343,6 +343,7 @@ class Like(db.Model):
     employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
     careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
 
+
     def __repr__(self):
         return f"Like('{self.id}')"
 

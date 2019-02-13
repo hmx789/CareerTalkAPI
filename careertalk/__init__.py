@@ -2,6 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from configs import constants
 from flask_jwt_extended import JWTManager
+from apscheduler.schedulers.background import BackgroundScheduler
+
 import json
 with open(constants.CONFIG, 'r') as f:
     config = json.load(f)
@@ -29,5 +31,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@{}:{}/{}'.format(
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+
+# build scheduler
+sched = BackgroundScheduler()
+sched.start()
 
 from careertalk import routes

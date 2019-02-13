@@ -1,19 +1,50 @@
-from careertalk import app, db, version
+from careertalk import app, db, version, sched
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, User,
-    Student, Connection, Like, Top5
+    Student, Connection, Like, Top5, Employer
 )
+
 from flask.json import jsonify
 from flask import request, make_response, render_template
 from flask_jwt_extended import (
     jwt_required, create_access_token,
     get_jwt_identity
 )
+from sqlalchemy import func, desc
+
 from google.oauth2 import id_token
 from google.auth.transport import requests
+
 import sys
 
 DB_SESSION = db.session
+CURRENT_CAREER_FAIR_ID = 17
+
+def calculate_top5():
+    """
+    :return:
+    """
+    # select employers of the current careerfair order by the # of likes.
+    # todo : This function should just use orm, not python function stuff.
+    # employers = Like.query().filter_by(careerfair_id=17).all()
+    employers = DB_SESSION.query(Like.employer_id, func.count(Like.employer_id).label('count')).filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).group_by(Like.employer_id).order_by(func.count(Like.employer_id).label('count').desc()).limit(5)
+    top5_employers = []
+    for e in employers:
+        top5_employers.append(e[0])
+
+    print(top5_employers)
+    top5 = Top5(top1=top5_employers[0], top2=top5_employers[1], top3=top5_employers[2], top4=top5_employers[3], top5=top5_employers[4], careerfair_id=CURRENT_CAREER_FAIR_ID)
+
+    top_5_to_delete = Top5.query.filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).first()
+    if top_5_to_delete:
+        DB_SESSION.delete(top_5_to_delete)
+        DB_SESSION.commit()
+
+    DB_SESSION.add(top5)
+    DB_SESSION.commit()
+    return top5_employers
+
+sched.add_job(calculate_top5, 'interval', hours=3)
 
 
 def _user_login(user, token):
