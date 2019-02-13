@@ -61,11 +61,12 @@ class GoogleSheet:
 
 
 class CareerFairIngest:
-    def __init__(self, ingest_config_path, work_path, db_session=None):
+    def __init__(self, ingest_config_path, work_path, db_session=None, debug=True):
         self.gsheet = GoogleSheet(ingest_config_path, work_path)
         self.db_session = db_session
         self.url_pattern = re.compile('(//)(.+\.)(com|org|net|edu|gov|mil)')
         self.job = self.gsheet.job
+        self.debug = debug
 
     def prune_www(self, url):
         """
@@ -103,8 +104,14 @@ class CareerFairIngest:
         return CareerFair.query.filter_by(name=self.job['name']).first()
 
     def make_employer(self, name, url):
-        print("making employer")
+        # print("making employer")
+        employer = Employer.query.filter_by(name=name).first()
+        if employer:
+            return employer
         return Employer(name=name, company_url=url)
+
+    def get_employer(self, name):
+        return Employer.query.filter_by(name=name).first()
 
     def get_org(self):
         college = College.query.filter_by(name=self.job['organization']).first()
@@ -139,40 +146,50 @@ class CareerFairIngest:
                                 zipcode=zipcode)
         return careerfair
 
-    def make_careerfair_employer(self, columns, cf_id, e_id, tables):
+    def get_degree_type_id(self, degree):
+        degree_types = set(d.strip().lower() for d in degree.split(','))
+        degree_types_sets_from_db = []
+        degrees = Degree.query.all()
+        for d in degrees:
+            serial = d.serialize
+            degree_types_sets_from_db.append(set(s.strip() for s in serial['type'].split(',')))
+        degree_type_id = None
+        for i, degree_tup in enumerate(degree_types_sets_from_db):
+            if degree_types == degree_tup:
+                degree_type_id = i + 1
+        if not degree_type_id:
+            print("Could not find that degree type: {} in our database.".format(degree))
+        return degree_type_id
 
-        # This part might be redundant if we know how exactly string is formatted on the google sheet.
-        visa_type = columns[0].lower()
-        print(visa_type)
+    def get_visa_type_id(self, visa_type):
         if visa_type == 'no':
             visa_type_id = 2
         elif visa_type == 'yes':
             visa_type_id = 1
         else:
             visa_type_id = 3
+        return visa_type_id
 
-        degree_types = set(d.strip() for d in columns[1].split(','))
-        degree_types_sets_from_db = []
-        degrees = Degree.query.all()
-        for d in degrees:
-            serial = d.serialize
-            degree_types_sets_from_db.append(set(s.strip()) for s in serial['type'].split(','))
-        degree_type_id = 1
-        for id, degree_tup in enumerate(degree_types_sets_from_db):
-            if degree_types == degree_tup:
-                degree_type_id = id+1
-        hiring_types = [h.strip() for h in columns[2].split(',')]
+    def get_hiring_type_id(self, hiring_type):
+        hiring_types = [h.strip() for h in hiring_type.split(',')]
         if len(hiring_types) > 1:
             hiring_type_id = 3
-            hiring_type_string = "FT, INT"
         else:
             hiring_type_string = hiring_types[0].upper()
             hiring_type_id = HiringType.query.filter_by(type=hiring_type_string).first().id
-        print(hiring_type_string)
+        return hiring_type_id
+
+    def make_careerfair_employer(self, columns, cf_id, e_id, tables):
+
+        # This part might be redundant if we know how exactly string is formatted on the google sheet.
+        visa_type = columns[0].lower()
+        visa_type_id = self.get_visa_type_id(visa_type)
+        degree_type_id = self.get_degree_type_id(columns[1])
+        hiring_type_id = self.get_hiring_type_id(columns[2])
+
 
         hiring_majors = [m.strip() for m in columns[3].split(',')]
         hiring_majors_str = ', '.join(hiring_majors)
-        print(hiring_majors_str)
 
         return CareerFairEmployer(employer_id=e_id,
                                   careerfair_id=cf_id,
@@ -183,15 +200,17 @@ class CareerFairIngest:
                                   tables=tables
                                   )
 
-    def add_data(self, data, commit, debug):
-        if not debug:
-            self.db_session.add(data)
-            if commit:
-                self.db_session.commit()
-        else:
+    def add_data(self, data, commit):
+        if self.debug:
             print('debug mode is on, data is not inserted.')
+            return False
 
-    def parse(self, debug=False):
+        self.db_session.add(data)
+        if commit:
+            self.db_session.commit()
+        return True
+
+    def parse(self):
         careerfair_employers = self.gsheet.get_employers()
         urls = self.gsheet.get_urls()
         if len(careerfair_employers) != len(urls):
@@ -199,22 +218,19 @@ class CareerFairIngest:
             exit()
 
         careerfair_employers = self.get_new_rows_including_urls(careerfair_employers, urls)
-
-
         careerfair = self.get_careerfair()
         if careerfair is not None:
+            careerfair = self.make_careerfair()
             # todo here finish the logic: when employers and the careerfair exist
             employers_in_db = self.get_employers_in_db(careerfair.id)
 
-        careerfair = self.make_careerfair()
-        self.add_data(careerfair, True, debug)
+            self.add_data(careerfair, True)
 
         for i, row in enumerate(careerfair_employers):
-
             name = row[0]
             url = row[5]
-            print("ADDING {}: {}, {}".format(i, name, url))
-            seleced_columns = (row[4], row[3], row[1], row[2])
+            # row[4]=visa, row[3]=degree, row[2]=majors, row[1]=hiring_type
+            selected_columns = (row[4], row[3], row[1], row[2])
             if len(row) < 7:
                 print("No table information")
                 tables = None
@@ -222,24 +238,20 @@ class CareerFairIngest:
                 tables = row[6]
 
             # insert Employer to the table.
-            employer = self.make_employer(name, url)
-
-            self.db_session.add(employer)
-            print("Succesfully Added Employer!")
-            self.db_session.flush()
+            employer = self.get_employer(name)
+            if not employer:
+                employer = self.make_employer(name, url)
+                self.add_data(employer, True)
 
             # insert CareerFairEmployer
-            careerfair_employer = self.make_careerfair_employer(seleced_columns,
+            careerfair_employer = self.make_careerfair_employer(selected_columns,
                                                                 careerfair.id,
                                                                 employer.id,
                                                                 tables)
-            self.db_session.add(careerfair_employer)
+            self.add_data(careerfair_employer, True)
+            print("ADDED {}: {}, {}".format(i, name, url))
 
-
-
-            self.db_session.commit()
-
-        print("DONE!!!!")
+        print("Sucesfully Parsed Googlesheet {}".format(self.job['sheet_id']))
 
 
 # Super Mini Manual Test.
