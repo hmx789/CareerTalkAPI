@@ -44,7 +44,7 @@ def calculate_top5():
     DB_SESSION.commit()
     return top5_employers
 
-sched.add_job(calculate_top5, 'interval', hours=3)
+sched.add_job(calculate_top5, 'interval', hours=2)
 
 
 def _user_login(user, token):
