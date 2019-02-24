@@ -1,29 +1,7 @@
 from careertalk import app
 from careertalk_ingest import ingest
+from careertalk_load import load
 import sys
-
-"""
-from flask import Flask
-
- 
-app = Flask(__name__)
- 
- 
-#add your job here
- 
-'''
-All of your app.routes here
-'''
- 
-# finally
-
-if __name__ == "__main__":
-	app.run()
-
-
-"""
-
-
 
 
 if __name__ == "__main__":
@@ -33,9 +11,12 @@ if __name__ == "__main__":
         exit()
 
     if sys.argv[1] == 'ingest':
-        print("Begin Data Ingestion")
+        print("Start Data Ingestion")
         ingest.parse()
 
+    if sys.argv[1] == 'load':
+        print("Start Data Load")
+        load.load_schema()
 
     if sys.argv[1] == 'app':
         app.run(debug=True)

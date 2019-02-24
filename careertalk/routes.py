@@ -20,12 +20,9 @@ import sys
 DB_SESSION = db.session
 CURRENT_CAREER_FAIR_ID = 17
 
+
 def calculate_top5():
-    """
-    :return:
-    """
     # select employers of the current careerfair order by the # of likes.
-    # todo : This function should just use orm, not python function stuff.
     # employers = Like.query().filter_by(careerfair_id=17).all()
     employers = DB_SESSION.query(Like.employer_id, func.count(Like.employer_id).label('count')).filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).group_by(Like.employer_id).order_by(func.count(Like.employer_id).label('count').desc()).limit(5)
     top5_employers = []
@@ -277,7 +274,6 @@ def v2_like_company(careerfair_id, employer_id):
                                                                                     careerfair_id))
     DB_SESSION.add(new_like)
     DB_SESSION.commit()
-
     response = make_response(jsonify({'message': 'Succesfully liked an employer'}), 200)
     return response
 
@@ -289,7 +285,6 @@ def top5_company(careerfair_id):
     return jsonify(top.serialize)
 
 
-# todo
 # Route
 # return version.
 @app.route('/careertalk/version', methods=['GET'])
