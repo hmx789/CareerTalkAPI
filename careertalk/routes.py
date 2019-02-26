@@ -1,7 +1,7 @@
 from careertalk import app, db, version, sched
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, User,
-    Student, Connection, Like, Top5, Employer
+    Student, Connection, Like, Top5
 )
 
 from flask.json import jsonify
@@ -10,7 +10,8 @@ from flask_jwt_extended import (
     jwt_required, create_access_token,
     get_jwt_identity
 )
-from sqlalchemy import func, desc
+from sqlalchemy import func
+
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -18,6 +19,7 @@ from google.auth.transport import requests
 import sys
 
 DB_SESSION = db.session
+
 CURRENT_CAREER_FAIR_ID = 17
 
 

@@ -16,7 +16,10 @@ if __name__ == "__main__":
 
     if sys.argv[1] == 'load':
         print("Start Data Load")
-        load.load_schema()
+        if(load.load_schema()):
+            print("Sucesfully Created Schema")
+            load.insert_values()
+
 
     if sys.argv[1] == 'app':
         app.run(debug=True)

@@ -27,15 +27,13 @@ VALUES ('no');
 INSERT INTO visa_type (type)
 VALUES ('maybe');
 
-
 INSERT INTO college (name, address, city, zipcode, website, state)
 VALUES ('University of Illinois at Chicago', '1200 W Harrison St', 'Chicago', '60607', 'www.uic.edu', 'IL');
 
-
-INSERT INTO user (first_name, last_name, personal_email)
+INSERT INTO public.user (first_name, last_name, personal_email)
 VALUES ('Seho', 'Lim', 'seho@gmail.com');
 
-INSERT INTO user (first_name, last_name, personal_email)
+INSERT INTO public.user (first_name, last_name, personal_email)
 VALUES ('recruiter', 'Kim', 'recruiter1@gmail.com');
 
 INSERT INTO connection (user_id, public_id, token, os)
@@ -69,7 +67,6 @@ VALUES ('Facebook', '2004', 'Cambridge', 'facebook.com');
 INSERT INTO employer (name, found_year, hq_city, company_url)
 VALUES ('Microsoft', '1975', 'Albuquerque', 'microsoft.com');
 
-
 INSERT INTO careerfair_employer
 (employer_id, degree_type_id, hiring_type_id, visa_type_id, careerfair_id, recruiter_id, hiring_majors, tables)
 VALUES (1, 7, 3, 1, 1, 1, 'CS, CSE', '21, 22');
@@ -85,5 +82,3 @@ VALUES (1, 7, 1, 3, 2, 2, 'ECE, CSE', '30, 31');
 INSERT INTO careerfair_employer
 (employer_id, degree_type_id, hiring_type_id, visa_type_id, careerfair_id, recruiter_id, hiring_majors, tables)
 VALUES (2, 7, 3, 1, 2, 2, 'ECE, CSE', '21');
-
-
