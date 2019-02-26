@@ -31,18 +31,22 @@ postgres = config["postgres"]
 #                                                 postgres["db"])
 
 POSTGRES = {
-    'user': 'postgres',
+    'user': 'careertalk',
     'pw': 'careertalk',
     'db': 'careertalk',
     'host': 'localhost',
     'port': '5432',
 }
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://%(user)s:\
-%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@{}:{}/{}'.format(POSTGRES['user'],
+                                                                             POSTGRES['pw'],
+                                                                             POSTGRES['host'],
+                                                                             POSTGRES['port'],
+                                                                             POSTGRES['db'])
 
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+
 
 # build scheduler
 sched = BackgroundScheduler()
