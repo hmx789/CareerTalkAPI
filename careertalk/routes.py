@@ -23,7 +23,9 @@ DB_SESSION = db.session
 CURRENT_CAREER_FAIR_ID = 17
 
 
+#todo : This function should not live here.
 def calculate_top5():
+    print("calculate_top5")
     # select employers of the current careerfair order by the # of likes.
     # employers = Like.query().filter_by(careerfair_id=17).all()
     employers = DB_SESSION.query(Like.employer_id, func.count(Like.employer_id).label('count')).filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).group_by(Like.employer_id).order_by(func.count(Like.employer_id).label('count').desc()).limit(5)
@@ -43,6 +45,8 @@ def calculate_top5():
     DB_SESSION.commit()
     return top5_employers
 
+#todo: Cron job should not be initialize here. We should ultimately saperate this.
+print("adding cron job.")
 sched.add_job(calculate_top5, 'interval', hours=2)
 
 
