@@ -18,8 +18,9 @@ if __name__ == "__main__":
         print("Start Data Load")
         if(load.load_schema()):
             print("Sucesfully Created Schema")
+            print("Starting Data Insertion")
             load.insert_values()
-
+            print("Finished Data Insertion")
 
     if sys.argv[1] == 'app':
         app.run(debug=True)

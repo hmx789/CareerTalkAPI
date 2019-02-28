@@ -43,10 +43,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@{}:{}/{}'.format(POS
                                                                              POSTGRES['port'],
                                                                              POSTGRES['db'])
 
-
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-
 
 # build scheduler
 sched = BackgroundScheduler()
