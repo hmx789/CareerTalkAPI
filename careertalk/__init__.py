@@ -23,13 +23,6 @@ version = config['version']
 print('****************** PRODUCTION MODE ******************')
 postgres = config["postgres"]
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{}:{}@{}:{}/{}'.format(
-#                                                 postgres["user"],
-#                                                 postgres["pw"],
-#                                                 postgres["endpoint"],
-#                                                 postgres["port"],
-#                                                 postgres["db"])
-
 POSTGRES = {
     'user': 'careertalk',
     'pw': 'careertalk',
