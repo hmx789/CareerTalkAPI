@@ -1,18 +1,54 @@
-from careertalk import app, db, version
-from careertalk.models import Fair, Company, CareerFair, Employer, CareerFairEmployer, User, Student, College, Connection, Like, Top5
+from careertalk import app, db, version, sched
+from careertalk.models import (
+    Fair, Company, CareerFair, CareerFairEmployer, User,
+    Student, Connection, Like, Top5
+)
+
 from flask.json import jsonify
 from flask import request, make_response, render_template
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
+    jwt_required, create_access_token,
     get_jwt_identity
 )
+from sqlalchemy import func
+
+
 from google.oauth2 import id_token
 from google.auth.transport import requests
+
 import sys
 
+DB_SESSION = db.session
 
-jwt = JWTManager(app)
-db_session = db.session
+CURRENT_CAREER_FAIR_ID = 17
+
+
+#todo : This function should not live here.
+def calculate_top5():
+    print("calculate_top5")
+    # select employers of the current careerfair order by the # of likes.
+    # employers = Like.query().filter_by(careerfair_id=17).all()
+    employers = DB_SESSION.query(Like.employer_id, func.count(Like.employer_id).label('count')).filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).group_by(Like.employer_id).order_by(func.count(Like.employer_id).label('count').desc()).limit(5)
+    top5_employers = []
+    for e in employers:
+        top5_employers.append(e[0])
+
+    print(top5_employers)
+    top5 = Top5(top1=top5_employers[0], top2=top5_employers[1], top3=top5_employers[2], top4=top5_employers[3], top5=top5_employers[4], careerfair_id=CURRENT_CAREER_FAIR_ID)
+
+    top_5_to_delete = Top5.query.filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).first()
+    if top_5_to_delete:
+        DB_SESSION.delete(top_5_to_delete)
+        DB_SESSION.commit()
+
+    DB_SESSION.add(top5)
+    DB_SESSION.commit()
+    return top5_employers
+
+#todo: Cron job should not be initialize here. We should ultimately saperate this.
+print("adding cron job.")
+sched.add_job(calculate_top5, 'interval', hours=2)
+
 
 def _user_login(user, token):
     data = jsonify({
@@ -24,6 +60,7 @@ def _user_login(user, token):
     response.headers['UserToken'] = token
 
     return response
+
 
 def _get_student(user):
     student = Student.query.filter_by(user_id=user["user_id"]).first()
@@ -58,7 +95,7 @@ def private_policy():
 @app.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
     companies = Company.query.filter_by(fair_id=fair_id).all()
-    # companies = db_session.query(Company).filter(Company.fair_id == fair_id).all()
+    # companies = DB_SESSION.query(Company).filter(Company.fair_id == fair_id).all()
     company_list = [company.serialize for company in companies]
     return jsonify(Company=company_list)
 
@@ -66,7 +103,7 @@ def get_companies(fair_id):
 @app.route('/careerfairs')
 def get_careerfairs():
     fairs = Fair.query.all()
-    # fairs = db_session.query(Fair).all()
+    # fairs = DB_SESSION.query(Fair).all()
     fair_list = [fair.serialize for fair in fairs]
     return jsonify(Careerfair=fair_list)
 
@@ -182,9 +219,9 @@ def google_signup():
     # Create an User
     user = User(first_name=given_name, last_name=family_name, personal_email=email, profile_img=profile_img)
     # Store the new user to the database.
-    db_session.add(user)
+    DB_SESSION.add(user)
     # Flush the session to get the user.id
-    db_session.flush()
+    DB_SESSION.flush()
     # Create a Student
     student = Student(user_id=user.id)
 
@@ -194,9 +231,9 @@ def google_signup():
     # Create a Connection
     connection = Connection(user_id=user.id, public_id=userid, token=access_token)
 
-    db_session.add(student)
-    db_session.add(connection)
-    db_session.commit()
+    DB_SESSION.add(student)
+    DB_SESSION.add(connection)
+    DB_SESSION.commit()
 
     return _user_login(user, access_token)
 
@@ -231,8 +268,8 @@ def v2_like_company(careerfair_id, employer_id):
     # CASE: already liked the company then delete the like
     if like:
         print("Unlike the employer")
-        db_session.delete(like)
-        db_session.commit()
+        DB_SESSION.delete(like)
+        DB_SESSION.commit()
         response = make_response(jsonify({'message': 'Unlike the employer .'}), 200)
         return response
 
@@ -241,9 +278,8 @@ def v2_like_company(careerfair_id, employer_id):
     print("new like created. student_id={}, employer_id={} careerfair_id={}".format(student.id,
                                                                                     employer_id,
                                                                                     careerfair_id))
-    db_session.add(new_like)
-    db_session.commit()
-
+    DB_SESSION.add(new_like)
+    DB_SESSION.commit()
     response = make_response(jsonify({'message': 'Succesfully liked an employer'}), 200)
     return response
 
@@ -255,7 +291,6 @@ def top5_company(careerfair_id):
     return jsonify(top.serialize)
 
 
-# todo
 # Route
 # return version.
 @app.route('/careertalk/version', methods=['GET'])
