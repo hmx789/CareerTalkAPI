@@ -1,10 +1,12 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from configs import constants
-from flask_jwt_extended import JWTManager
-from apscheduler.schedulers.background import BackgroundScheduler
-
 import json
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from flask import Flask
+from flask_jwt_extended import JWTManager
+from flask_sqlalchemy import SQLAlchemy
+
+from configs import constants
+
 with open(constants.CONFIG, 'r') as f:
     config = json.load(f)
 

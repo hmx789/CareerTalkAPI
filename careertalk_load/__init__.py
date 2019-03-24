@@ -1,9 +1,10 @@
-from careertalk import db, app
-from sqlalchemy import create_engine
-from common.common_utils import run_script
-
-from configs.constants import LOAD_CONFIG
 import json
+
+from sqlalchemy import create_engine
+
+from careertalk import db, app
+from common.common_utils import run_script
+from configs.constants import LOAD_CONFIG
 
 engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 con = engine.connect()

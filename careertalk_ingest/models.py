@@ -1,8 +1,8 @@
+import json
+
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-
-import json
 
 
 def _open_jobs(path):

@@ -1,5 +1,6 @@
-from careertalk import app
 import sys
+
+from careertalk import app
 
 if __name__ == "__main__":
     if len(sys.argv) == 0:
