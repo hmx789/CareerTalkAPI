@@ -21,7 +21,6 @@ app.config['social_google'] = {
 }
 version = config['version']
 
-
 print('****************** LOCAL DEV MODE ******************')
 postgres = config["postgres"]
 
