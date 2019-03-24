@@ -1,5 +1,6 @@
-from careertalk import db
 from datetime import datetime
+
+from careertalk import db
 
 
 def _to_minutes(time):

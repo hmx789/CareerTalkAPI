@@ -1,22 +1,20 @@
+import sys
+
+from flask import request, make_response, render_template
+from flask.json import jsonify
+from flask_jwt_extended import (
+    jwt_required, create_access_token,
+    get_jwt_identity
+)
+from google.auth.transport import requests
+from google.oauth2 import id_token
+from sqlalchemy import func
+
 from careertalk import app, db, version, sched
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, User,
     Student, Connection, Like, Top5
 )
-
-from flask.json import jsonify
-from flask import request, make_response, render_template
-from flask_jwt_extended import (
-    jwt_required, create_access_token,
-    get_jwt_identity
-)
-from sqlalchemy import func
-
-
-from google.oauth2 import id_token
-from google.auth.transport import requests
-
-import sys
 
 DB_SESSION = db.session
 
