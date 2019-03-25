@@ -8,9 +8,9 @@ from flask_jwt_extended import (
 )
 from google.auth.transport import requests
 from google.oauth2 import id_token
-from sqlalchemy import func
 
-from careertalk import app, db, version, sched
+# Todo: This import will call the careertalk/__init__.py again. Fix this later.
+from careertalk import app, db, version, google_config
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, User,
     Student, Connection, Like, Top5
@@ -18,34 +18,7 @@ from careertalk.models import (
 
 DB_SESSION = db.session
 
-CURRENT_CAREER_FAIR_ID = 17
-
-
-#todo : This function should not live here.
-def calculate_top5():
-    print("calculate_top5")
-    # select employers of the current careerfair order by the # of likes.
-    # employers = Like.query().filter_by(careerfair_id=17).all()
-    employers = DB_SESSION.query(Like.employer_id, func.count(Like.employer_id).label('count')).filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).group_by(Like.employer_id).order_by(func.count(Like.employer_id).label('count').desc()).limit(5)
-    top5_employers = []
-    for e in employers:
-        top5_employers.append(e[0])
-
-    print(top5_employers)
-    top5 = Top5(top1=top5_employers[0], top2=top5_employers[1], top3=top5_employers[2], top4=top5_employers[3], top5=top5_employers[4], careerfair_id=CURRENT_CAREER_FAIR_ID)
-
-    top_5_to_delete = Top5.query.filter_by(careerfair_id=CURRENT_CAREER_FAIR_ID).first()
-    if top_5_to_delete:
-        DB_SESSION.delete(top_5_to_delete)
-        DB_SESSION.commit()
-
-    DB_SESSION.add(top5)
-    DB_SESSION.commit()
-    return top5_employers
-
-#todo: Cron job should not be initialize here. We should ultimately saperate this.
-print("adding cron job.")
-sched.add_job(calculate_top5, 'interval', hours=2)
+print("This is route!!!!!!!")
 
 
 def _user_login(user, token):
@@ -84,6 +57,7 @@ def support_info():
 @app.route('/careertalk/private_policy')
 def private_policy():
     return render_template('private_policy.html')
+
 
 # ------------------------------------------------------------------------------
 #                                V1 Endpoints
@@ -164,7 +138,7 @@ def v2_get_companies(fair_id):
 # Provide a method to create access tokens.
 @app.route('/glogin', methods=['POST'])
 def google_signup():
-
+    google_client_id = google_config.glogin_client_id
     # Check if the request has Authorization header
     if not request.is_json:
         return make_response(jsonify({"msg": "Missing JSON in request"}), 400)
@@ -177,7 +151,7 @@ def google_signup():
     # Validate id token.
     try:
         id_info = id_token.verify_oauth2_token(
-            token, requests.Request(), app.config['social_google']['client_id'])
+            token, requests.Request(), google_client_id)
     except ValueError as err:
         print('The token is not valid: ', sys.exc_info()[1])
         response = make_response(jsonify({'message': 'Wrong token'}), 401)
@@ -192,7 +166,7 @@ def google_signup():
         response = make_response(jsonify({'message': 'Wrong issuer'}), 401)
         return response
 
-    if id_info['aud'] != app.config['social_google']['client_id']:
+    if id_info['aud'] != google_client_id:
         print("Token's aud id does not match app's.", sys.exc_info()[1])
         response = make_response(jsonify({'message': 'Aud does not match.'}), 401)
         return response
@@ -235,6 +209,7 @@ def google_signup():
 
     return _user_login(user, access_token)
 
+
 # Protect a view with jwt_required, which requires a valid access token
 # in the request to access.
 @app.route('/protected', methods=['GET'])
@@ -249,7 +224,6 @@ def protected():
 @app.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
 @jwt_required
 def v2_like_company(careerfair_id, employer_id):
-
     # first decode the jwt
     current_user = get_jwt_identity()
     student = Student.query.filter_by(user_id=current_user["user_id"]).first()
@@ -259,9 +233,9 @@ def v2_like_company(careerfair_id, employer_id):
         return response
 
     # check if this user already liked the company
-    like = Like.query\
-        .filter_by(student_id=student.id)\
-        .filter_by(employer_id=employer_id)\
+    like = Like.query \
+        .filter_by(student_id=student.id) \
+        .filter_by(employer_id=employer_id) \
         .filter_by(careerfair_id=careerfair_id).first()
     # CASE: already liked the company then delete the like
     if like:

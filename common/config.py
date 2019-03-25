@@ -7,7 +7,7 @@ def _get_config(path):
     return config
 
 
-class IngestConfig():
+class IngestConfig:
     """
     Wrapper class for ingest configs. Currently this config only load a single ingest
     job.
@@ -26,30 +26,30 @@ class IngestConfig():
         self.service = config["service"]
 
 
-class Config():
-    postgres = {
-        'user': 'careertalk',
-        'pw': 'careertalk',
-        'db': 'careertalk',
-        'host': 'localhost',
-        'port': '5432',
-    }
-    DEBUG = True
-    TESTING = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
-                                                                   'careertalk',
-                                                                   'localhost',
-                                                                   '5432',
-                                                                   'careertalk')
+class GoogleSocialLoginConfig:
+    """
+    Wrapper class for google social login client credentials.
+    """
+
+    def __init__(self):
+        google = _get_config("configs/config.json")["social"]["google"]
+        self.glogin_client_id = google["client_id"]
+        self.glogin_client_secret = google["client_id"]
 
 
-class ProductionConfig(Config):
-    DATABASE_URI = 'todo'
+class Config:
 
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-
-class TestingConfig(Config):
-    TESTING = True
+    def __init__(self):
+        config = _get_config("configs/config.json")
+        self.DEBUG = True
+        self.TESTING = False
+        self.SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
+                                                                            'careertalk',
+                                                                            'localhost',
+                                                                            '5432',
+                                                                            'careertalk')
+        self.SQLALCHEMY_TRACK_MODIFICATIONS = False
+        self.SECRET_KEY = config['secret_key']
+        self.ENV = 'development'
+        self.JWT_SECRET_KEY = config['secret_key']
+        self.VERSION = config['version']

@@ -1,6 +1,6 @@
 import sys
 
-from careertalk import app
+from apscheduler.schedulers.background import BackgroundScheduler
 
 if __name__ == "__main__":
     if len(sys.argv) == 0:
@@ -25,4 +25,18 @@ if __name__ == "__main__":
             print("Finished Data Insertion")
 
     if sys.argv[1] == 'app':
+        # TODO: Currently, the app is calling routes and __init__.py twice.
+        print("before loading app")
+        from careertalk import app, db
+        print("after loading app")
+        from careertalk_cron.cron_jobs import calculate_top5
+        print("careertalk cron job loaded")
+        import careertalk.routes
+
+        sched = BackgroundScheduler()
+        sched.start()
+        print("adding cron job.")
+        sched.add_job(calculate_top5, 'interval', hours=5, args=[db.session])
+
+        print("app run!!")
         app.run(debug=True)
