@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 from careertalk.models import Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
-from careertalk_ingest import GoogleSheet
+from careertalk_ingest.models import GoogleSheet
 
 
 class CareerFairIngest:

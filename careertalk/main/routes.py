@@ -10,15 +10,16 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 
 # Todo: This import will call the careertalk/__init__.py again. Fix this later.
-from careertalk import app, db, version, google_config
+from careertalk import db, version
+from careertalk.main import bp
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, User,
     Student, Connection, Like, Top5
 )
+print("This is ROUTE")
+print(db)
 
 DB_SESSION = db.session
-
-print("This is route!!!!!!!")
 
 
 def _user_login(user, token):
@@ -43,18 +44,18 @@ def _get_student(user):
 # ------------------------------------------------------------------------------
 
 
-@app.route('/')
-@app.route('/main')
+@bp.route('/')
+@bp.route('/main')
 def main():
     return "hello world"
 
 
-@app.route('/careertalk/support')
+@bp.route('/careertalk/support')
 def support_info():
     return render_template('contact.html')
 
 
-@app.route('/careertalk/private_policy')
+@bp.route('/careertalk/private_policy')
 def private_policy():
     return render_template('private_policy.html')
 
@@ -64,7 +65,7 @@ def private_policy():
 # ------------------------------------------------------------------------------
 
 
-@app.route("/<int:fair_id>/companies", methods=['GET'])
+@bp.route("/<int:fair_id>/companies", methods=['GET'])
 def get_companies(fair_id):
     companies = Company.query.filter_by(fair_id=fair_id).all()
     # companies = DB_SESSION.query(Company).filter(Company.fair_id == fair_id).all()
@@ -72,7 +73,7 @@ def get_companies(fair_id):
     return jsonify(Company=company_list)
 
 
-@app.route('/careerfairs')
+@bp.route('/careerfairs')
 def get_careerfairs():
     fairs = Fair.query.all()
     # fairs = DB_SESSION.query(Fair).all()
@@ -84,7 +85,7 @@ def get_careerfairs():
 #                                V2 Endpoints
 # ------------------------------------------------------------------------------
 
-@app.route('/v2/careerfairs')
+@bp.route('/v2/careerfairs')
 def v2_get_careerfairs():
     fairs = CareerFair.query.all()
     fair_list = [fair.serialize for fair in fairs]
@@ -95,7 +96,7 @@ def v2_get_careerfairs():
     return jsonify(return_obj)
 
 
-@app.route('/v2/<int:fair_id>/anon_user/employers', methods=['GET'])
+@bp.route('/v2/<int:fair_id>/anon_user/employers', methods=['GET'])
 def v2_get_companies_anonuser(fair_id):
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
     company_list = [company.serialize for company in companies]
@@ -103,7 +104,7 @@ def v2_get_companies_anonuser(fair_id):
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
 
 
-@app.route('/v2/<int:fair_id>/employers', methods=['GET'])
+@bp.route('/v2/<int:fair_id>/employers', methods=['GET'])
 @jwt_required
 def v2_get_companies(fair_id):
     current_user = get_jwt_identity()
@@ -136,7 +137,7 @@ def v2_get_companies(fair_id):
 
 
 # Provide a method to create access tokens.
-@app.route('/glogin', methods=['POST'])
+@bp.route('/glogin', methods=['POST'])
 def google_signup():
     google_client_id = google_config.glogin_client_id
     # Check if the request has Authorization header
@@ -212,7 +213,7 @@ def google_signup():
 
 # Protect a view with jwt_required, which requires a valid access token
 # in the request to access.
-@app.route('/protected', methods=['GET'])
+@bp.route('/protected', methods=['GET'])
 @jwt_required
 def protected():
     # Access the identity of the current user with get_jwt_identity
@@ -221,7 +222,7 @@ def protected():
 
 
 # todo
-@app.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
+@bp.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
 @jwt_required
 def v2_like_company(careerfair_id, employer_id):
     # first decode the jwt
@@ -256,7 +257,7 @@ def v2_like_company(careerfair_id, employer_id):
     return response
 
 
-@app.route('/v2/<int:careerfair_id>/top5', methods=['GET'])
+@bp.route('/v2/<int:careerfair_id>/top5', methods=['GET'])
 @jwt_required
 def top5_company(careerfair_id):
     top = Top5.query.filter_by(careerfair_id=careerfair_id).first()
@@ -265,6 +266,6 @@ def top5_company(careerfair_id):
 
 # Route
 # return version.
-@app.route('/careertalk/version', methods=['GET'])
+@bp.route('/careertalk/version', methods=['GET'])
 def version_check():
     return jsonify({'version': version})

@@ -2,7 +2,6 @@ from datetime import datetime
 
 from careertalk import db
 
-
 def _to_minutes(time):
     t = time.hour * 60 + time.minute
     return t
@@ -10,7 +9,7 @@ def _to_minutes(time):
 
 def _format_time(time):
     suffix = 'PM' if time.hour >= 12 else 'AM'
-    hour = time.hour-12 if time.hour >= 13 else time.hour
+    hour = time.hour - 12 if time.hour >= 13 else time.hour
     return "{}:{} {}".format(hour, time.strftime("%M"), suffix)
 
 
@@ -35,7 +34,6 @@ class Visa(db.Model):
                 return visa.id
         print("Could not find {} in Visa".format(visa_type))
         return None
-
 
 
 class HiringType(db.Model):
@@ -123,7 +121,6 @@ class Connection(db.Model):
 
     def __repr__(self):
         return f"Connection('{self.id}', '{self.user_id}')"
-
 
 
 class Recruiter(db.Model):
@@ -294,7 +291,6 @@ class CareerFairEmployer(db.Model):
         }
 
 
-
 class CareerFair(db.Model):
     __tablename__ = 'careerfair'
     id = db.Column(db.Integer, primary_key=True)
@@ -344,7 +340,6 @@ class Like(db.Model):
     employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
     careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
 
-
     def __repr__(self):
         return f"Like('{self.id}')"
 
@@ -380,6 +375,7 @@ class Top5(db.Model):
             'top5': employer5.serialize,
             'careerfair': careerfair.serialize
         }
+
 
 # ------------------------------------------------------------------------------
 #                                V1 models
@@ -418,10 +414,10 @@ class Company(db.Model):
             'tables': tables_list,
             'fair': self.fair.name,
             'fair_id': self.fair_id,
-            'visa': visa[self.visa-1],
-            'degree': degree[self.degree-1],
+            'visa': visa[self.visa - 1],
+            'degree': degree[self.degree - 1],
             'hiring_majors': majors,
-            'hiring_types': types[self.hiring_types-1],
+            'hiring_types': types[self.hiring_types - 1],
             'description': self.description,
             'company_url': self.company_url,
             'name': self.name,
@@ -440,7 +436,7 @@ class CareerFairTable(db.Model):
 
 
 class Fair(db.Model):
-    #__tablename__ = 'fair'
+    # __tablename__ = 'fair'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String)

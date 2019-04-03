@@ -1,21 +1,22 @@
-DROP DATABASE IF EXISTS careertalk;
-CREATE DATABASE careertalk;
-DATABASE careertalk;
-
-DROP TABLE IF EXISTS public.careerfair;
-DROP TABLE IF EXISTS public.careerfair_table;
-DROP TABLE IF EXISTS public.note_on_employer;
-DROP TABLE IF EXISTS public.recruiter;
-DROP TABLE IF EXISTS public.state;
-DROP TABLE IF EXISTS public.college;
-DROP TABLE IF EXISTS public.degree;
-DROP TABLE IF EXISTS public.education;
-DROP TABLE IF EXISTS public.top_five_employers;
-DROP TABLE IF EXISTS public.student_like_employer;
-DROP TABLE IF EXISTS public.careerfair_employer;
-DROP TABLE IF EXISTS public.employer_fair;
-DROP TABLE IF EXISTS public.user;
-DROP TABLE IF EXISTS public.connection;
+DROP TABLE IF EXISTS public.hiring_type CASCADE;
+DROP TABLE IF EXISTS public.degree_type CASCADE;
+DROP TABLE IF EXISTS public.visa_type CASCADE;
+DROP TABLE IF EXISTS public.careerfair CASCADE;
+DROP TABLE IF EXISTS public.careerfair_table CASCADE;
+DROP TABLE IF EXISTS public.note_on_employer CASCADE;
+DROP TABLE IF EXISTS public.employer CASCADE;
+DROP TABLE IF EXISTS public.recruiter CASCADE;
+DROP TABLE IF EXISTS public.college CASCADE;
+DROP TABLE IF EXISTS public.degree CASCADE;
+DROP TABLE IF EXISTS public.education CASCADE;
+DROP TABLE IF EXISTS public.top_five_employers CASCADE;
+DROP TABLE IF EXISTS public.student CASCADE;
+DROP TABLE IF EXISTS public.student_like_employer CASCADE;
+DROP TABLE IF EXISTS public.careerfair_employer CASCADE;
+DROP TABLE IF EXISTS public.employer_fair CASCADE;
+DROP TABLE IF EXISTS public.fair CASCADE;
+DROP TABLE IF EXISTS public.user CASCADE;
+DROP TABLE IF EXISTS public.connection CASCADE;
 
 
 CREATE TABLE public.hiring_type
@@ -87,7 +88,7 @@ CREATE TABLE public.fair
     end_time time without time zone NOT NULL,
     location VARCHAR,
     organization VARCHAR(250),
-    date TIMESTAMP WITH TIME ZONE,
+    date TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE public.careerfair_table
@@ -96,6 +97,34 @@ CREATE TABLE public.careerfair_table
     employer_id integer NOT NULL REFERENCES employer,
     fair_id integer NOT NULL REFERENCES fair,
     table_number integer
+);
+
+CREATE TABLE public.user
+(
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    middle_name VARCHAR(50),
+    personal_email VARCHAR(255) UNIQUE,
+    profile_img VARCHAR DEFAULT 'default_profile.png',
+    registered_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE public.student
+(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES public.user,
+    major VARCHAR(50),
+    degree INTEGER REFERENCES degree_type,
+    college_id INTEGER REFERENCES college,
+    looking_hiring_type INTEGER REFERENCES hiring_type,
+    highest_degree INTEGER REFERENCES degree_type,
+    graduating_date DATE,
+    available_date DATE,
+    github_link VARCHAR(100),
+    linkedin_link VARCHAR(100),
+    portfolio_link VARCHAR,
+    school_email VARCHAR(100)
 );
 
 CREATE TABLE public.note_on_employer
@@ -119,53 +148,11 @@ CREATE TABLE public.recruiter
 	work_phone VARCHAR(16)
 );
 
-
-CREATE TABLE public.state
-(
-	id SERIAL PRIMARY KEY,
-	state_code VARCHAR(2) NOT NULL,
-	state_name VARCHAR(128) NOT NULL
-
-);
-
-
-
 CREATE TABLE public.degree
 (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(10) NOT NULL
-
 );
-
-CREATE TABLE public.user
-(
-    id SERIAL PRIMARY KEY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    middle_name VARCHAR(50),
-    personal_email VARCHAR(255) UNIQUE,
-    profile_img VARCHAR DEFAULT 'default_profile.png',
-    registered_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP
-);
-
-
-CREATE TABLE public.student
-(
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES user,
-    major VARCHAR(50),
-    degree INTEGER REFERENCES degree_type,
-    college_id INTEGER REFERENCES college,
-    looking_hiring_type INTEGER REFERENCES hiring_type,
-    highest_degree INTEGER REFERENCES degree_type,
-    graduating_date DATE,
-    available_date DATE,
-    github_link VARCHAR(100),
-    linkedin_link VARCHAR(100),
-    portfolio_link VARCHAR,
-    school_email VARCHAR(100)
-);
-
 
 CREATE TABLE public.education
 (
@@ -184,7 +171,7 @@ CREATE TABLE public.top_five_employers
 	top3 INTEGER NOT NULL REFERENCES employer,
 	top4 INTEGER NOT NULL REFERENCES employer,
 	top5 INTEGER NOT NULL REFERENCES employer,
-	careerfair_id INTEGER NOT NULL REFERENCES careerfair_id,
+	careerfair_id INTEGER NOT NULL REFERENCES careerfair,
 	date DATE NOT NULL
 );
 
@@ -214,7 +201,7 @@ CREATE TABLE public.employer_fair
 CREATE TABLE public.connection
 (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES user,
+    user_id INTEGER NOT NULL REFERENCES public.user,
     public_id VARCHAR(255),
     access_token VARCHAR(255),
     id_token VARCHAR(255),
