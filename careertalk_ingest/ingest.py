@@ -225,8 +225,12 @@ class CareerFairIngest:
             return False
 
         for id in ids_set:
-            employer = CareerFairEmployer.query.filter_by(employer_id=id).first()
-            self.delete_data(employer, False)
+            careerfair_employer = CareerFairEmployer.query.filter_by(employer_id=id).first()
+            employer = Employer.query.filter_by(id=id).first()
+            print("DELETED: {}".format(employer.name))
+
+            self.delete_data(careerfair_employer, False)
+
         self.db_session.commit()
         return True
 
@@ -262,7 +266,7 @@ class CareerFairIngest:
         n_deleted_employers = len(ids_set)
         # CASE: There were companies who decide not to participate.
         self.delete_non_participating_employers(ids_set)
-        return n_added, n_existing, n_deleted_employers
+        return n_added, n_existing-n_deleted_employers, n_deleted_employers
 
     def parse(self):
         # cg is careerfair google sheet
