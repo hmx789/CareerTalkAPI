@@ -11,4 +11,4 @@ careertalk-firebase-admin.json
 *.pyc
 .vscode
 configs/
-token.picke
+token.pickle
