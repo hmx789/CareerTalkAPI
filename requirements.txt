@@ -49,7 +49,7 @@ requests==2.21.0
 requests-oauthlib==1.0.0
 rq==0.13.0
 rsa==3.4.2
-simplejson==3.16.1
+simplejson==3.16.0
 six==1.12.0
 SQLAlchemy==1.2.0
 tzlocal==1.5.1
