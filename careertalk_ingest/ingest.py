@@ -50,7 +50,18 @@ class CareerFairIngest:
         return set(e.employer_id for e in employers)
 
     def get_careerfair(self):
-        return CareerFair.query.filter_by(name=self.job['name']).first()
+        """
+        This method gets a career fair if exists on db, otherwise make careerfair and then return the fair.
+        :return: CareerFair
+        """
+        fair_name = self.job['name']
+        fair = CareerFair.query.filter_by(name=fair_name).first()
+        if not fair:
+            print("Creating a Career Fair {}".format(fair_name))
+            fair = self.make_careerfair()
+            self.add_data(fair, True)
+
+        return fair
 
     def make_employer(self, name, url):
         # print("making employer")
@@ -165,9 +176,10 @@ class CareerFairIngest:
             self.db_session.commit()
         return True
 
-    def add_employer_to_table(self, row, fair_id):
+    def create_employer_to_table(self, row, fair_id):
         """
-        This take a list that contains a single employer info in google sheet and add the company to the db.
+        This take a list that contains a single employer info in google sheet, create an employer obj,
+        and then add the CareerFairEmployer to the careerfair_employer table.
         :param row: represents google sheet row.
 
         row[0]: Name of the employer
@@ -186,7 +198,6 @@ class CareerFairIngest:
         # row[4]=visa, row[3]=degree, row[2]=majors, row[1]=hiring_type
         selected_columns = (row[4], row[3], row[1], row[2])
         if len(row) < 7:
-            print("No table information")
             tables = None
         else:
             tables = row[6]
@@ -203,50 +214,71 @@ class CareerFairIngest:
                                                             employer.id,
                                                             tables)
         self.add_data(careerfair_employer, True)
-        print("ADDED {}: {}".format(name, url))
+        print("ADDED: {}, {}".format(name, url))
 
-    def delete_non_participating_employers(self, employers_ids_set):
-        if not employers_ids_set:
+    def delete_non_participating_employers(self, ids_set):
+        """
+        :param employers_ids_set: set of employers ids
+        :return: boolean
+        """
+        if not ids_set:
             return False
 
-        for id in employers_ids_set:
+        for id in ids_set:
             employer = CareerFairEmployer.query.filter_by(employer_id=id)
             self.delete_data(employer, False)
         self.db_session.commit()
         return True
-    
+
+    def make_careerfair_employer_wrapper(self, fair_id, ids_set, rows):
+        """
+        :param fair_id: CareerFair id
+        :param ids_set: employers_id set
+        :param rows: Google sheet row
+        :return: results of the parsing.
+        """
+        # CASE: This is new careerfair, add all the CareerFair employers.
+        if not ids_set:
+            for row in rows:
+                self.create_employer_to_table(row, fair_id)
+            return len(rows), 0, 0
+
+        n_added = 0
+        n_existing = len(ids_set)
+        # CASE: Currently, there are some employers for this career fair.
+        for i, row in enumerate(rows):
+            employer_name = row[0]
+            employer = self.get_employer(employer_name)
+
+            if employer and employer.id in ids_set:
+                ids_set.remove(employer.id)
+                print("Exists Already {}: {}".format(i+1, employer.name))
+                continue
+
+            n_added += 1
+            self.create_employer_to_table(row, fair_id)
+
+        # employers in ids_set at this point should be removed from db from careerfair_employer table.
+        n_deleted_employers = len(ids_set)
+        # CASE: There were companies who decide not to participate.
+        self.delete_non_participating_employers(ids_set)
+        return n_added, n_existing, n_deleted_employers
+
     def parse(self):
         # cg is careerfair google sheet
         cgs = self.gsheet
-        careerfair_employe_rows = cgs.get_employers()
+        careerfair_employer_rows = cgs.get_employers()
         urls = cgs.get_urls()
-        if len(careerfair_employe_rows) != len(urls):
-            print("Something went wrong, number of employers and urls mismatch.")
-            exit()
-
-        careerfair_employe_rows = self.combine_fairs_urls(careerfair_employe_rows, urls)
+        rows = self.combine_fairs_urls(careerfair_employer_rows, urls)
         careerfair = self.get_careerfair()
-        print(careerfair)
-        if not careerfair:
-            print("Creating a Career Fair")
-            careerfair = self.make_careerfair()
-            self.add_data(careerfair, True)
 
-        # todo here finish the logic: when employers and the careerfair exist
         employers_ids_set = self.get_employers_id_set_from_db(careerfair.id)
 
-        for row in careerfair_employe_rows:
-            company_name = row[0]
-            if employers_ids_set and company_name in employers_ids_set:
-                employers_ids_set.pop(company_name)
-                print("{} already exists".format(company_name))
-                continue
-            print("New company {} is joining {}!".format(company_name, careerfair.name))
+        n_added, n_existing, n_deleted = self.make_careerfair_employer_wrapper(careerfair.id, employers_ids_set, rows)
 
-            # create a wrapper function that wraps make_careerfair_employer
-            self.add_employer_to_table(row, careerfair.id)
-
-        # CASE: There were companies who decide not to participate.
-        self.delete_non_participating_employers(employers_ids_set)
-
+        print("\n===================================== RESULT =====================================")
         print("Sucesfully Parsed Googlesheet {}".format(self.job['sheet_id']))
+        print("# New Employers      : {}".format(n_added))
+        print("# Existing Employers : {}".format(n_existing))
+        print("# Canceled Employers : {}\n".format(n_deleted))
+        print("Link: {}\n".format(self.job['url']))
