@@ -225,7 +225,7 @@ class CareerFairIngest:
             return False
 
         for id in ids_set:
-            employer = CareerFairEmployer.query.filter_by(employer_id=id)
+            employer = CareerFairEmployer.query.filter_by(employer_id=id).first()
             self.delete_data(employer, False)
         self.db_session.commit()
         return True
