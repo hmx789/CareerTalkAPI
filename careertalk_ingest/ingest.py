@@ -229,9 +229,8 @@ class CareerFairIngest:
             employer = Employer.query.filter_by(id=id).first()
             print("DELETED: {}".format(employer.name))
 
-            self.delete_data(careerfair_employer, False)
+            self.delete_data(careerfair_employer, True)
 
-        self.db_session.commit()
         return True
 
     def make_careerfair_employer_wrapper(self, fair_id, ids_set, rows):
