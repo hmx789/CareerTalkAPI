@@ -1,8 +1,12 @@
 import json
 
+import pickle
+import os.path
+
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+
 from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import file, client, tools
 
 
 def _open_jobs(path):
@@ -33,16 +37,32 @@ class GoogleSheet:
 
     @property
     def gsheet_service(self):
-        conf = self.config
-        store = file.Storage(conf.token_path)
-        creds = store.get()
-        if not creds or creds.invalid:
-            flow = client.flow_from_clientsecrets(conf.cred_path, conf.scope)
-            creds = tools.run_flow(flow, store)
 
-        return build(conf.service,
-                     conf.discovery_version,
-                     http=creds.authorize(Http()))
+        """Shows basic usage of the Sheets API.
+        Prints values from a sample spreadsheet.
+        """
+        conf = self.config
+        creds = None
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    conf.cred_path, conf.scope)
+                creds = flow.run_local_server()
+            # Save the credentials for the next run
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+
+        service = build(conf.service, conf.discovery_version, credentials=creds)
+        return service
 
     def get_employers(self):
         """
