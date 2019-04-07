@@ -28,7 +28,7 @@ class CareerFairIngest:
             return new_url[4:]
         return new_url
 
-    def get_new_rows_including_urls(self, employers, urls):
+    def combine_fairs_urls(self, employers, urls):
         if len(employers) != len(urls):
             print("Something went wrong, number of employers and urls mismatch.")
             exit()
@@ -38,10 +38,16 @@ class CareerFairIngest:
         return employers
 
     # todo load employers by the careerfair_id from CareerFairEmployer
-    def get_employers_in_db(self, careerfair_id):
+    # return the python dictionary "<employer_name>: <name>"
+    def get_employers_id_set_from_db(self, careerfair_id):
         if self.db_session is None:
-            print("This CareerFairIngest object does not have db session.")
-        return
+            print("This CareerFairIngest object does not have db session yet")
+        employers = CareerFairEmployer.query.filter_by(careerfair_id=careerfair_id).all()
+        if not employers:
+            print("this careerfair does not have associated employers yet.")
+            return None
+
+        return set(e.employer_id for e in employers)
 
     def get_careerfair(self):
         return CareerFair.query.filter_by(name=self.job['name']).first()
@@ -150,47 +156,97 @@ class CareerFairIngest:
             self.db_session.commit()
         return True
 
+    def delete_data(self, data, commit):
+        if self.debug:
+            print('debug mode is on, data is not deleted.')
+            return False
+        self.db_session.delete(data)
+        if commit:
+            self.db_session.commit()
+        return True
+
+    def add_employer_to_table(self, row, fair_id):
+        """
+        This take a list that contains a single employer info in google sheet and add the company to the db.
+        :param row: represents google sheet row.
+
+        row[0]: Name of the employer
+        row[1]: Hiring type
+        row[2]: Majors
+        row[3]: Degrees
+        row[4]: Visa
+        row[5]: Url
+        Optional row[6]: tables <-- this one is optional.
+
+        :return: name of the added employer
+        """
+
+        name = row[0]
+        url = row[5]
+        # row[4]=visa, row[3]=degree, row[2]=majors, row[1]=hiring_type
+        selected_columns = (row[4], row[3], row[1], row[2])
+        if len(row) < 7:
+            print("No table information")
+            tables = None
+        else:
+            tables = row[6]
+
+        # insert Employer to the table.
+        employer = self.get_employer(name)
+        if not employer:
+            employer = self.make_employer(name, url)
+            self.add_data(employer, True)
+
+        # insert CareerFairEmployer
+        careerfair_employer = self.make_careerfair_employer(selected_columns,
+                                                            fair_id,
+                                                            employer.id,
+                                                            tables)
+        self.add_data(careerfair_employer, True)
+        print("ADDED {}: {}".format(name, url))
+
+    def delete_non_participating_employers(self, employers_ids_set):
+        if not employers_ids_set:
+            return False
+
+        for id in employers_ids_set:
+            employer = CareerFairEmployer.query.filter_by(employer_id=id)
+            self.delete_data(employer, False)
+        self.db_session.commit()
+        return True
+    
     def parse(self):
-        careerfair_employers = self.gsheet.get_employers()
-        urls = self.gsheet.get_urls()
-        if len(careerfair_employers) != len(urls):
+        # cg is careerfair google sheet
+        cgs = self.gsheet
+        careerfair_employe_rows = cgs.get_employers()
+        urls = cgs.get_urls()
+        if len(careerfair_employe_rows) != len(urls):
             print("Something went wrong, number of employers and urls mismatch.")
             exit()
 
-        careerfair_employers = self.get_new_rows_including_urls(careerfair_employers, urls)
+        careerfair_employe_rows = self.combine_fairs_urls(careerfair_employe_rows, urls)
         careerfair = self.get_careerfair()
         print(careerfair)
         if not careerfair:
             print("Creating a Career Fair")
             careerfair = self.make_careerfair()
-            # todo here finish the logic: when employers and the careerfair exist
-            employers_in_db = self.get_employers_in_db(careerfair.id)
-
             self.add_data(careerfair, True)
 
-        for i, row in enumerate(careerfair_employers):
-            name = row[0]
-            url = row[5]
-            # row[4]=visa, row[3]=degree, row[2]=majors, row[1]=hiring_type
-            selected_columns = (row[4], row[3], row[1], row[2])
-            if len(row) < 7:
-                print("No table information")
-                tables = None
-            else:
-                tables = row[6]
+        # todo here finish the logic: when employers and the careerfair exist
+        employers_ids_set = self.get_employers_id_set_from_db(careerfair.id)
 
-            # insert Employer to the table.
-            employer = self.get_employer(name)
-            if not employer:
-                employer = self.make_employer(name, url)
-                self.add_data(employer, True)
+        for row in careerfair_employe_rows:
+            company_name = row[0]
+            if employers_ids_set and company_name in employers_ids_set:
+                employers_ids_set.pop(company_name)
+                print("{} already exists".format(company_name))
+                continue
+            print("New company {} is joining {}!".format(company_name, careerfair.name))
 
-            # insert CareerFairEmployer
-            careerfair_employer = self.make_careerfair_employer(selected_columns,
-                                                                careerfair.id,
-                                                                employer.id,
-                                                                tables)
-            self.add_data(careerfair_employer, True)
-            print("ADDED {}: {}, {}".format(i, name, url))
+            # create a wrapper function that wraps make_careerfair_employer
+            self.add_employer_to_table(row, careerfair.id)
+
+        # CASE: There were companies who decide not to participate.
+        self.delete_non_participating_employers(employers_ids_set)
 
         print("Sucesfully Parsed Googlesheet {}".format(self.job['sheet_id']))

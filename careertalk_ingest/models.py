@@ -45,6 +45,10 @@ class GoogleSheet:
                      http=creds.authorize(Http()))
 
     def get_employers(self):
+        """
+
+        :return: employers list
+        """
         j = self.job
         employers = self.service.spreadsheets().values().get(spreadsheetId=j['sheet_id'],
                                                              range=j['range']).execute()['values']
