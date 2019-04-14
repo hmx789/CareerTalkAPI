@@ -1,6 +1,7 @@
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
 
-from careertalk import db
+db = SQLAlchemy()
 
 def _to_minutes(time):
     t = time.hour * 60 + time.minute

@@ -1,7 +1,7 @@
 import sys
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from careertalk import create_rest, create_load, create_ingest
+from careertalk import create_load, create_rest, db
 from common.config import IngestConfig
 
 if __name__ != "__main__":
@@ -14,11 +14,10 @@ if len(sys.argv) == 0:
 
 if sys.argv[1] == 'ingest':
     ingest_config = IngestConfig()
-    app, db = create_ingest(ingest_config)
 
     from careertalk_ingest.ingest import CareerFairIngest
 
-    ingest = CareerFairIngest(ingest_config=ingest_config, db_session=db.session)
+    ingest = CareerFairIngest(ingest_config=ingest_config)
     print("Start Data Ingestion")
     ingest.parse()
 
@@ -27,7 +26,7 @@ if sys.argv[1] == 'load':
     from common.config import LoadConfig
 
     load_config = LoadConfig()
-    app, db = create_load(load_config)
+    app = create_load(load_config)
 
     load = LoadDataIntoPostgres(load_config, db)
     print("Start Data Load")
@@ -38,16 +37,22 @@ if sys.argv[1] == 'load':
         print("Finished Data Insertion")
 
 if sys.argv[1] == 'app':
-    from common.config import Config
     from careertalk_cron.cron_jobs import calculate_top5
 
-    config = Config()
-    app, db = create_rest(config)
+    ingest_config = IngestConfig()
+    app = create_rest(ingest_config)
     scheduler = BackgroundScheduler()
-    scheduler.start()
+
     print("adding cron job.")
 
-    scheduler.add_job(calculate_top5, 'interval', hours=5, args=[db.session])
-    print("App run!")
+    from careertalk_ingest.ingest import CareerFairIngest
 
-    app.run()
+    ingest = CareerFairIngest(ingest_config=ingest_config)
+    print("Start Data Ingestion")
+
+    scheduler.add_job(calculate_top5, 'interval', hours=5, args=[db.session])
+    scheduler.add_job(ingest.parse, 'interval', hours=6)
+    print("App run!")
+    scheduler.start()
+
+    app.run(debug=True, use_reloader=False)

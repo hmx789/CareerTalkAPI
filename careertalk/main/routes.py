@@ -16,8 +16,6 @@ from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, User,
     Student, Connection, Like, Top5
 )
-print("This is ROUTE")
-print(db)
 
 DB_SESSION = db.session
 

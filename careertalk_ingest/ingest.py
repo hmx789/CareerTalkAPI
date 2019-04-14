@@ -1,14 +1,15 @@
 import re
 from datetime import datetime
 
+from careertalk import create_ingest, db
 from careertalk.models import Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
 from careertalk_ingest.models import GoogleSheet
 
-
 class CareerFairIngest:
-    def __init__(self, ingest_config, db_session=None, debug=False):
+    def __init__(self, ingest_config, debug=False):
+        self.ingest_config = ingest_config
         self.gsheet = GoogleSheet(ingest_config)
-        self.db_session = db_session
+        self.db_session = None
         self.url_pattern = re.compile('(//)(.+\.)(com|org|net|edu|gov|mil)')
         self.job = self.gsheet.job
         self.debug = debug
@@ -268,16 +269,23 @@ class CareerFairIngest:
         return n_added, n_existing-n_deleted_employers, n_deleted_employers
 
     def parse(self):
+        print("parsing.")
+
         # cg is careerfair google sheet
-        cgs = self.gsheet
-        careerfair_employer_rows = cgs.get_employers()
-        urls = cgs.get_urls()
+        google_sheet = self.gsheet
+        app = create_ingest(self.ingest_config)
+
+        db.init_app(app)
+        self.db_session = db.session
+
+        careerfair_employer_rows = google_sheet.get_employers()
+        urls = google_sheet.get_urls()
         rows = self.combine_fairs_urls(careerfair_employer_rows, urls)
-        careerfair = self.get_careerfair()
 
-        employers_ids_set = self.get_employers_id_set_from_db(careerfair.id)
-
-        n_added, n_existing, n_deleted = self.make_careerfair_employer_wrapper(careerfair.id, employers_ids_set, rows)
+        with app.app_context():
+            careerfair = self.get_careerfair()
+            employers_ids_set = self.get_employers_id_set_from_db(careerfair.id)
+            n_added, n_existing, n_deleted = self.make_careerfair_employer_wrapper(careerfair.id, employers_ids_set, rows)
 
         print("\n===================================== RESULT =====================================")
         print("Sucesfully Parsed Googlesheet {}".format(self.job['sheet_id']))

@@ -19,7 +19,7 @@ def create_rest(config):
     from careertalk.main import bp as main_blueprint
     app.register_blueprint(main_blueprint)
 
-    return app, db
+    return app
 
 
 def create_app(config_obj):
@@ -40,14 +40,11 @@ def create_app(config_obj):
 
 def create_load(config_obj):
     app = create_app(config_obj)
-    db = SQLAlchemy(app)
+    db.init_app(app)
 
-    return app, db
+    return app
 
 
 def create_ingest(config_obj):
     app = create_app(config_obj)
-    global db
-    db = SQLAlchemy(app)
-
-    return app, db
+    return app
