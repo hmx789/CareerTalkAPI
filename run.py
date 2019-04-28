@@ -51,8 +51,8 @@ if sys.argv[1] == 'app':
     print("Start Data Ingestion")
 
     scheduler.add_job(calculate_top5, 'interval', hours=5, args=[db.session])
-    scheduler.add_job(ingest.parse, 'interval', hours=6)
-    print("App run!")
+    scheduler.add_job(ingest.parse, 'interval', hours=5)
     scheduler.start()
 
+    print("App run!")
     app.run(debug=True, use_reloader=False)

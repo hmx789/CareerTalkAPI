@@ -1,4 +1,5 @@
 from sqlalchemy.sql import text
+from flask import make_response, jsonify, request
 
 
 def run_script(filename, conn):
@@ -14,3 +15,21 @@ def run_script(filename, conn):
             conn.execute(text(new_string))
 
     print("Successfully ran {} statements".format(stmts_len))
+
+
+def _message_builder(message, code):
+    return make_response(jsonify({'message:': message}), code)
+
+
+def _check_identity_header(headers, key):
+    """
+
+    :param rq: Flask request object
+    :param key: key_header
+    :return:
+    """
+    try:
+        val = headers[key]
+    except KeyError:
+        return _message_builder("key header is missing", 400)
+    return val

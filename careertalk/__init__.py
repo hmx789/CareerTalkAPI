@@ -1,23 +1,24 @@
 from flask import Flask
-from flask_jwt_extended import JWTManager
-from flask_sqlalchemy import SQLAlchemy
+
+from careertalk.models import db
+from careertalk.views import blueprints
 
 version = '2.0.0'
 print('****************** LOCAL DEV MODE ******************')
-jwt = JWTManager()
-db = SQLAlchemy()
-
 
 def create_rest(config):
     print("CREATE REST API.")
     # TODO: In production we need one more line of code that loads
     #      environment variables and overrides the app configuration.
+
+
     app = create_app(config)
-    jwt.init_app(app)
     db.init_app(app)
 
-    from careertalk.main import bp as main_blueprint
-    app.register_blueprint(main_blueprint)
+    # register all the blueprints.
+    for bp in blueprints:
+        app.register_blueprint(bp)
+        bp.app = app
 
     return app
 
@@ -25,6 +26,8 @@ def create_rest(config):
 def create_app(config_obj):
     print("CREATE APP.")
     """
+    :param config_obj: Configuration object.
+
     A factory function for generating differnt versions of app. We want many versions of app
     with different configurations depending on where we are deploying apps. This allow us to
     create multiple versions of app easily. For example, we will pass testing configuration
