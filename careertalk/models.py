@@ -1,7 +1,11 @@
+import uuid
+
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import UUID
 
 db = SQLAlchemy()
+
 
 def _to_minutes(time):
     t = time.hour * 60 + time.minute
@@ -17,7 +21,12 @@ def _format_time(time):
 class Visa(db.Model):
     __tablename__ = 'visa_type'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     type = db.Column(db.String(6), nullable=False)
+
+    def __init__(self, *args, **kw):
+        super(Visa, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -40,7 +49,12 @@ class Visa(db.Model):
 class HiringType(db.Model):
     __tablename__ = 'hiring_type'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     type = db.Column(db.String(20), nullable=False)
+
+    def __init__(self, *args, **kw):
+        super(HiringType, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -63,7 +77,12 @@ class HiringType(db.Model):
 class Degree(db.Model):
     __tablename__ = 'degree_type'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     type = db.Column(db.String(20), nullable=False)
+
+    def __init__(self, *args, **kw):
+        super(Degree, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -86,12 +105,18 @@ class Degree(db.Model):
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
+    google_id = db.Column(db.String(255), unique=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     middle_name = db.Column(db.String(50))
     personal_email = db.Column(db.String(255), unique=True)
     profile_img = db.Column(db.String(), default='default_profile.png')
     registered_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, *args, **kw):
+        super(User, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"User('{self.first_name}', '{self.personal_email}')"
@@ -100,6 +125,7 @@ class User(db.Model):
     def serialize(self):
         return {
             'personal_email': self.personal_email,
+            'google_id': self.google_id,
             'profile_url': self.profile_img,
             'registered_on': self.registered_on,
             'first_name': self.first_name,
@@ -112,6 +138,7 @@ class User(db.Model):
 class Connection(db.Model):
     __tablename__ = 'connection'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     public_id = db.Column(db.String(255))
     access_token = db.Column(db.String(255))
@@ -120,6 +147,10 @@ class Connection(db.Model):
     token = db.Column(db.String)
     os = db.Column(db.String(10))
 
+    def __init__(self, *args, **kw):
+        super(Connection, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
+
     def __repr__(self):
         return f"Connection('{self.id}', '{self.user_id}')"
 
@@ -127,12 +158,17 @@ class Connection(db.Model):
 class Recruiter(db.Model):
     __tablename__ = 'recruiter'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
     middle_name = db.Column(db.String(100))
     employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'))
     work_email = db.Column(db.String(255))
     work_phone = db.Column(db.String(16))
+
+    def __init__(self, *args, **kw):
+        super(Recruiter, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Recruiter('{self.first_name}')"
@@ -154,12 +190,17 @@ class Recruiter(db.Model):
 class Employer(db.Model):
     __tablename__ = 'employer'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     name = db.Column(db.String(100), nullable=False)
     found_year = db.Column(db.String(4))
     hq_city = db.Column(db.String(50))
     description = db.Column(db.String())
     logo_url = db.Column(db.String(), default='default_employer.png')
     company_url = db.Column(db.String())
+
+    def __init__(self, *args, **kw):
+        super(Employer, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Employer('{self.name}', '{self.company_url}')"
@@ -180,6 +221,7 @@ class Employer(db.Model):
 class Student(db.Model):
     __tablename__ = 'student'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
     looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
@@ -191,6 +233,10 @@ class Student(db.Model):
     portfolio_link = db.Column(db.String(255))
     school_email = db.Column(db.String(255))
     major = db.Column(db.String(50))
+
+    def __init__(self, *args, **kw):
+        super(Student, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Student(user_id: '{self.user_id}')"
@@ -227,6 +273,7 @@ class Student(db.Model):
 class College(db.Model):
     __tablename__ = 'college'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     name = db.Column(db.String(255))
     address = db.Column(db.String(255))
     city = db.Column(db.String(100))
@@ -235,6 +282,10 @@ class College(db.Model):
     established = db.Column(db.Date)
     website = db.Column(db.String(255))
     logo_url = db.Column(db.String(255), default='default_college.png')
+
+    def __init__(self, *args, **kw):
+        super(College, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"College('{self.name}')"
@@ -257,6 +308,7 @@ class College(db.Model):
 class CareerFairEmployer(db.Model):
     __tablename__ = 'careerfair_employer'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
     careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'), nullable=False)
     recruiter_id = db.Column(db.Integer, db.ForeignKey('recruiter.id'))
@@ -265,6 +317,10 @@ class CareerFairEmployer(db.Model):
     hiring_type_id = db.Column(db.Integer, db.ForeignKey('hiring_type.id'), nullable=False)
     hiring_majors = db.Column(db.String())
     tables = db.Column(db.String())
+
+    def __init__(self, *args, **kw):
+        super(CareerFairEmployer, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"CareerFairEmployer('{self.hiring_majors}', '{self.employer_id}')"
@@ -295,6 +351,7 @@ class CareerFairEmployer(db.Model):
 class CareerFair(db.Model):
     __tablename__ = 'careerfair'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     organization_id = db.Column(db.Integer, db.ForeignKey('college.id'))
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String)
@@ -307,7 +364,11 @@ class CareerFair(db.Model):
     zipcode = db.Column(db.String(5))
     other_organization = db.Column(db.String(50))
     map_url = db.Column(db.String())
-    employers = db.relationship(CareerFairEmployer, backref='careerfair', lazy=True)
+    employers = db.relationship(CareerFairEmployer, backref='careerfair', cascade='all,delete', lazy=True)
+
+    def __init__(self, *args, **kw):
+        super(CareerFair, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Careerfair('{self.name}')"
@@ -337,9 +398,14 @@ class CareerFair(db.Model):
 class Like(db.Model):
     __tablename__ = 'student_like_employer'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
     employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
     careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
+
+    def __init__(self, *args, **kw):
+        super(Like, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Like('{self.id}')"
@@ -348,6 +414,7 @@ class Like(db.Model):
 class Top5(db.Model):
     __tablename__ = 'top_five_employers'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     top1 = db.Column(db.Integer, db.ForeignKey('employer.id'))
     top2 = db.Column(db.Integer, db.ForeignKey('employer.id'))
     top3 = db.Column(db.Integer, db.ForeignKey('employer.id'))
@@ -355,6 +422,10 @@ class Top5(db.Model):
     top5 = db.Column(db.Integer, db.ForeignKey('employer.id'))
     careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
     updated_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, *args, **kw):
+        super(Top5, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Top5('{self.id}')"
@@ -386,6 +457,7 @@ class Top5(db.Model):
 class Company(db.Model):
     __tablename__ = 'company'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String())
     hiring_types = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
@@ -394,6 +466,10 @@ class Company(db.Model):
     visa = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
     fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'))
     company_url = db.Column(db.String())
+
+    def __init__(self, *args, **kw):
+        super(Company, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -429,16 +505,22 @@ class Company(db.Model):
 class CareerFairTable(db.Model):
     __tablename__ = 'fair_table'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'))
     table_number = db.Column(db.Integer)
     fair = db.relationship('Fair')
     company = db.relationship('Company')
 
+    def __init__(self, *args, **kw):
+        super(CareerFairTable, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
+
 
 class Fair(db.Model):
     # __tablename__ = 'fair'
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String)
     start_date = db.Column(db.Date, nullable=False)
@@ -447,7 +529,11 @@ class Fair(db.Model):
     end_time = db.Column(db.Time, nullable=False)
     location = db.Column(db.String)
     organization = db.Column(db.String(250))
-    companies = db.relationship('Company', backref='fair', lazy=True)
+    companies = db.relationship('Company', backref='fair', cascade="all,delete", lazy=True)
+
+    def __init__(self, *args, **kw):
+        super(Fair, self).__init__(*args, **kw)
+        self.uuid = uuid.uuid4()
 
     def __repr__(self):
         return f"Fair('{self.name}', '{self.employer_id}')"
