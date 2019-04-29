@@ -10,11 +10,11 @@ def run_script(filename, conn):
     for command in sql_commands:
         if command != '\n':
             new_string = command.strip()
-            print("SQL: ", new_string)
+            # print("SQL: ", new_string)
             stmts_len += 1
             conn.execute(text(new_string))
 
-    print("Successfully ran {} statements".format(stmts_len))
+    print("SUCCESS: Ran {} statements".format(stmts_len))
 
 
 def _message_builder(message, code):

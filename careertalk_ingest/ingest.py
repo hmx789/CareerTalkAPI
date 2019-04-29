@@ -1,9 +1,11 @@
 import re
+
 from datetime import datetime
 
-from careertalk import create_ingest, db
-from careertalk.models import Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
+from careertalk import create_operation
+from careertalk.models import db, Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
 from careertalk_ingest.models import GoogleSheet
+
 
 class CareerFairIngest:
     def __init__(self, ingest_config, debug=False):
@@ -74,15 +76,22 @@ class CareerFairIngest:
     def get_employer(self, name):
         return Employer.query.filter_by(name=name).first()
 
-    def get_org(self):
-        college = College.query.filter_by(name=self.job['organization']).first()
-        if not college:
-            print("WARNING: This is unresolved dependency. Database administrator did not upload this college yet.")
+    def get_org_or_create(self):
+        org_name = self.job['organization']
+        college = College.query.filter_by(name=org_name).first()
+        print(college)
+        if college is None:
+            print("Data Not Found: {}".format(org_name))
+            print("Creating College: {}".format(org_name))
+
+            college = College(name=org_name)
+            self.add_data(college, True)
+
         return college
 
     def make_careerfair(self):
         JOB = self.job
-        college = self.get_org()
+        college = self.get_org_or_create()
         name = JOB['name']
         # dates = [int(c) for c in JOB['date'].split('-')]
         dates = JOB['date']
@@ -138,6 +147,7 @@ class CareerFairIngest:
             hiring_type_string = hiring_types[0].upper()
             hiring_type_id = HiringType.query.filter_by(type=hiring_type_string).first().id
         return hiring_type_id
+
 
     def make_careerfair_employer(self, columns, cf_id, e_id, tables):
 
@@ -273,7 +283,7 @@ class CareerFairIngest:
 
         # cg is careerfair google sheet
         google_sheet = self.gsheet
-        app = create_ingest(self.ingest_config)
+        app = create_operation(self.ingest_config, "INGEST")
 
         db.init_app(app)
         self.db_session = db.session

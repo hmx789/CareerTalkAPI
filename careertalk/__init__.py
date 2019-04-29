@@ -24,7 +24,7 @@ def create_rest(config):
 
 
 def create_app(config_obj):
-    print("CREATE APP.")
+
     """
     :param config_obj: Configuration object.
 
@@ -41,13 +41,7 @@ def create_app(config_obj):
     return app
 
 
-def create_load(config_obj):
-    app = create_app(config_obj)
-    db.init_app(app)
-
-    return app
-
-
-def create_ingest(config_obj):
+def create_operation(config_obj, op):
+    print("CREATE {} APP.".format(op))
     app = create_app(config_obj)
     return app
