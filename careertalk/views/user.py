@@ -23,9 +23,6 @@ def _create_student_user(given_name, family_name, email, profile_img):
     session.commit()
     return student
 
-@user.route('/v2/register/student/user')
-
-
 
 # headers: { googleId, email, given_name, family_name, picture },
 @user.route('/v2/register/student/user')

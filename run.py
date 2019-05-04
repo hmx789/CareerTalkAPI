@@ -13,20 +13,25 @@ if len(sys.argv) == 0:
     exit()
 
 if sys.argv[1] == 'ingest':
+    from careertalk_ingest.ingest import CareerFairIngest
+    from careertalk import create_operation
     ingest_config = IngestConfig()
 
-    from careertalk_ingest.ingest import CareerFairIngest
+    app, db = create_operation(ingest_config, "Ingest")
 
-    ingest = CareerFairIngest(ingest_config=ingest_config)
+    ingest = CareerFairIngest(ingest_config=ingest_config, app=app, db=db)
+
     print("Start Data Ingestion")
     ingest.parse()
 
 if sys.argv[1] == 'load':
     from careertalk_load.models import LoadDataIntoPostgres
     from common.config import LoadConfig
+    from careertalk import create_operation
 
     load_config = LoadConfig()
-    load = LoadDataIntoPostgres(load_config)
+    app, db = create_operation(load_config, "Ingest")
+    load = LoadDataIntoPostgres(load_config, app, db)
 
     load.load_schema_using_alchemy()
 
@@ -43,8 +48,7 @@ if sys.argv[1] == 'app':
 
     print("Adding Two Cron Jobs")
     scheduler.add_job(calculate_top5, 'interval', hours=5)
-    scheduler.add_job(ingest.parse, 'interval', hours=5)
+    scheduler.add_job(ingest.parse, 'interval', hours=12)
     scheduler.start()
 
-    print("App Run!")
     app.run(debug=True, use_reloader=False)

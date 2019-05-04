@@ -1,18 +1,16 @@
 from flask import Flask
 
 from careertalk.models import db
-from careertalk.views import blueprints
 
 version = '2.0.0'
 print('****************** LOCAL DEV MODE ******************')
 
 def create_rest(config):
+    from careertalk.views import blueprints
     print("CREATE REST API.")
     # TODO: In production we need one more line of code that loads
     #      environment variables and overrides the app configuration.
-
-
-    app = create_app(config)
+    app = _create_app(config)
     db.init_app(app)
 
     # register all the blueprints.
@@ -23,7 +21,7 @@ def create_rest(config):
     return app
 
 
-def create_app(config_obj):
+def _create_app(config_obj):
 
     """
     :param config_obj: Configuration object.
@@ -43,5 +41,6 @@ def create_app(config_obj):
 
 def create_operation(config_obj, op):
     print("CREATE {} APP.".format(op))
-    app = create_app(config_obj)
-    return app
+    app = _create_app(config_obj)
+    db.init_app(app)
+    return app, db

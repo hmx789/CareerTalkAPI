@@ -29,6 +29,7 @@ def calculate_top5():
             top5_employers.append(e[0])
 
         if len(top5_employers) < 5:
+            print("No top5 yet")
             return None
 
         top5 = Top5(top1=top5_employers[0], top2=top5_employers[1], top3=top5_employers[2], top4=top5_employers[3],

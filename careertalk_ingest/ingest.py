@@ -8,13 +8,14 @@ from careertalk_ingest.models import GoogleSheet
 
 
 class CareerFairIngest:
-    def __init__(self, ingest_config, debug=False):
+    def __init__(self, ingest_config, app, db, debug=False):
         self.ingest_config = ingest_config
         self.gsheet = GoogleSheet(ingest_config)
-        self.db_session = None
+        self.db_session = db.session
         self.url_pattern = re.compile('(//)(.+\.)(com|org|net|edu|gov|mil)')
         self.job = self.gsheet.job
         self.debug = debug
+        self.app = app
 
     def prune_www(self, url):
         """
@@ -283,16 +284,14 @@ class CareerFairIngest:
 
         # cg is careerfair google sheet
         google_sheet = self.gsheet
-        app = create_operation(self.ingest_config, "INGEST")
 
-        db.init_app(app)
         self.db_session = db.session
 
         careerfair_employer_rows = google_sheet.get_employers()
         urls = google_sheet.get_urls()
         rows = self.combine_fairs_urls(careerfair_employer_rows, urls)
 
-        with app.app_context():
+        with self.app.app_context():
             careerfair = self.get_careerfair()
             employers_ids_set = self.get_employers_id_set_from_db(careerfair.id)
             n_added, n_existing, n_deleted = self.make_careerfair_employer_wrapper(careerfair.id, employers_ids_set, rows)
@@ -303,3 +302,5 @@ class CareerFairIngest:
         print("# Existing Employers : {}".format(n_existing))
         print("# Canceled Employers : {}\n".format(n_deleted))
         print("Link: {}\n".format(self.job['url']))
+
+        db.session.close()
