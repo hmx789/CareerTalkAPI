@@ -41,21 +41,8 @@ class LoadConfig(Config):
     def __init__(self):
         Config.__init__(self)
 
-        script_base_url = "scripts/"
-        self.INSERT_SCRIPT_PATH = script_base_url + "v2_insert_values.sql"
-        self.CREATE_SCRIPT_PATH = script_base_url + "v2_create_careerfair.sql"
-
-
-class TestLoadConfig(LoadConfig):
-    def __init__(self):
-        LoadConfig.__init__(self)
-
-        self.SQLALCHEMY_DATABASE_URI = env.get('DATABASE_URL') or \
-                                       'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
-                                                                            'careertalk',
-                                                                            'localhost',
-                                                                            '5432',
-                                                                            'careertalk-test')
+        self.insert_script_path = "scripts/v2_insert_values.sql"
+        self.create_script_path = "scripts/v2_create_careerfair.sql"
 
 
 class IngestConfig(Config):
@@ -79,18 +66,33 @@ class IngestConfig(Config):
         self.service = config["service"]
 
 
-class TestIngestConfig(IngestConfig):
+class TestIngestConfig():
+    DEBUG = False
+    Testing = True
+    ENV = 'development'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    work_path = 'tests/resources/ingest-job-test.json'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
+                                                                    'careertalk',
+                                                                    'localhost',
+                                                                    '5432',
+                                                                    'careertalk-test')
+    service = "sheets"
+    discovery_version = "v4"
+    scope = "https://www.googleapis.com/auth/spreadsheets.readonly"
+    token_path = "configs/gsheet-token.json"
+    cred_path = "configs/ingest-credentials.json"
 
-    def __init__(self):
-        IngestConfig.__init__(self)
-        self.DEBUG = False
-        self.TESTING = True
 
-        self.SQLALCHEMY_DATABASE_URI = env.get('DATABASE_URL') or \
-                                       'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
-                                                                            'careertalk',
-                                                                            'localhost',
-                                                                            '5432',
-                                                                            'careertalk-test')
-
-
+class TestLoadConfig():
+    DEBUG = False
+    Testing = True
+    ENV = 'development'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    insert_script_path = "scripts/v2_insert_values.sql"
+    create_script_path = "scripts/v2_create_careerfair.sql"
+    SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
+                                                                    'careertalk',
+                                                                    'localhost',
+                                                                    '5432',
+                                                                    'careertalk-test')

@@ -1,6 +1,7 @@
 import sys
 
 from apscheduler.schedulers.background import BackgroundScheduler
+
 from careertalk import create_rest
 from common.config import IngestConfig
 
@@ -14,12 +15,10 @@ if len(sys.argv) == 0:
 
 if sys.argv[1] == 'ingest':
     from careertalk_ingest.ingest import CareerFairIngest
-    from careertalk import create_operation
+
     ingest_config = IngestConfig()
 
-    app, db = create_operation(ingest_config, "Ingest")
-
-    ingest = CareerFairIngest(ingest_config=ingest_config, app=app, db=db)
+    ingest = CareerFairIngest(ingest_config=ingest_config)
 
     print("Start Data Ingestion")
     ingest.parse()
@@ -27,12 +26,9 @@ if sys.argv[1] == 'ingest':
 if sys.argv[1] == 'load':
     from careertalk_load.models import LoadDataIntoPostgres
     from common.config import LoadConfig
-    from careertalk import create_operation
 
     load_config = LoadConfig()
-    app, db = create_operation(load_config, "Ingest")
-    load = LoadDataIntoPostgres(load_config, app, db)
-
+    load = LoadDataIntoPostgres(load_config)
     load.load_schema_using_alchemy()
 
 if sys.argv[1] == 'app':

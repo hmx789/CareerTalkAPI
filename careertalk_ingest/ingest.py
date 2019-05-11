@@ -2,20 +2,18 @@ import re
 
 from datetime import datetime
 
-from careertalk import create_operation
-from careertalk.models import db, Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
+from careertalk.models import Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
 from careertalk_ingest.models import GoogleSheet
 
 
 class CareerFairIngest:
-    def __init__(self, ingest_config, app, db, debug=False):
+    def __init__(self, ingest_config, debug=False, session=None):
         self.ingest_config = ingest_config
         self.gsheet = GoogleSheet(ingest_config)
-        self.db_session = db.session
+        self.db_session=session
         self.url_pattern = re.compile('(//)(.+\.)(com|org|net|edu|gov|mil)')
         self.job = self.gsheet.job
         self.debug = debug
-        self.app = app
 
     def prune_www(self, url):
         """
@@ -41,7 +39,6 @@ class CareerFairIngest:
             employers[i].append(self.prune_www(u))
         return employers
 
-    # todo load employers by the careerfair_id from CareerFairEmployer
     # return the python dictionary "<employer_name>: <name>"
     def get_employers_id_set_from_db(self, careerfair_id):
         if self.db_session is None:
@@ -53,15 +50,14 @@ class CareerFairIngest:
 
         return set(e.employer_id for e in employers)
 
-    def get_careerfair(self):
+    def get_or_create_careerfair(self, name):
         """
         This method gets a career fair if exists on db, otherwise make careerfair and then return the fair.
         :return: CareerFair
         """
-        fair_name = self.job['name']
-        fair = CareerFair.query.filter_by(name=fair_name).first()
+        fair = CareerFair.query.filter_by(name=name).first()
         if not fair:
-            print("Creating a Career Fair {}".format(fair_name))
+            print("Creating a Career Fair {}".format(name))
             fair = self.make_careerfair()
             self.add_data(fair, True)
 
@@ -149,7 +145,6 @@ class CareerFairIngest:
             hiring_type_id = HiringType.query.filter_by(type=hiring_type_string).first().id
         return hiring_type_id
 
-
     def make_careerfair_employer(self, columns, cf_id, e_id, tables):
 
         # This part might be redundant if we know how exactly string is formatted on the google sheet.
@@ -186,6 +181,7 @@ class CareerFairIngest:
         self.db_session.delete(data)
         if commit:
             self.db_session.commit()
+        self.db_session.commit()
         return True
 
     def create_employer_to_table(self, row, fair_id):
@@ -193,6 +189,7 @@ class CareerFairIngest:
         This take a list that contains a single employer info in google sheet, create an employer obj,
         and then add the CareerFairEmployer to the careerfair_employer table.
         :param row: represents google sheet row.
+        :param fair_id: careerfari id
 
         row[0]: Name of the employer
         row[1]: Hiring type
@@ -207,7 +204,6 @@ class CareerFairIngest:
 
         name = row[0]
         url = row[5]
-        # row[4]=visa, row[3]=degree, row[2]=majors, row[1]=hiring_type
         selected_columns = (row[4], row[3], row[1], row[2])
         if len(row) < 7:
             tables = None
@@ -230,7 +226,7 @@ class CareerFairIngest:
 
     def delete_non_participating_employers(self, ids_set):
         """
-        :param employers_ids_set: set of employers ids
+        :param ids_set: set of employers ids
         :return: boolean
         """
         if not ids_set:
@@ -252,15 +248,19 @@ class CareerFairIngest:
         :param rows: Google sheet row
         :return: results of the parsing.
         """
+
         # CASE: This is new careerfair, add all the CareerFair employers.
         if not ids_set:
+            joining_employers = set()
             for row in rows:
-                self.create_employer_to_table(row, fair_id)
-            return len(rows), 0, 0
+                if row[0] not in joining_employers:
+                    self.create_employer_to_table(row, fair_id)
+                    joining_employers.add(row[0])
+            return len(joining_employers), 0, 0
 
+        # CASE: Currently, there are some employers for this career fair.
         n_added = 0
         n_existing = len(ids_set)
-        # CASE: Currently, there are some employers for this career fair.
         for i, row in enumerate(rows):
             employer_name = row[0]
             employer = self.get_employer(employer_name)
@@ -270,8 +270,8 @@ class CareerFairIngest:
                 print("Exists Already {}: {}".format(i+1, employer.name))
                 continue
 
-            n_added += 1
             self.create_employer_to_table(row, fair_id)
+            n_added += 1
 
         # employers in ids_set at this point should be removed from db from careerfair_employer table.
         n_deleted_employers = len(ids_set)
@@ -280,21 +280,23 @@ class CareerFairIngest:
         return n_added, n_existing-n_deleted_employers, n_deleted_employers
 
     def parse(self):
-        print("parsing.")
+        from careertalk import create_operation
 
-        # cg is careerfair google sheet
+        app, db = create_operation(self.ingest_config, "Ingest")
+        if self.db_session is None:
+            self.db_session = db.session
+
         google_sheet = self.gsheet
-
-        self.db_session = db.session
 
         careerfair_employer_rows = google_sheet.get_employers()
         urls = google_sheet.get_urls()
         rows = self.combine_fairs_urls(careerfair_employer_rows, urls)
 
-        with self.app.app_context():
-            careerfair = self.get_careerfair()
+        with app.app_context():
+            careerfair = self.get_or_create_careerfair(self.job["name"])
             employers_ids_set = self.get_employers_id_set_from_db(careerfair.id)
             n_added, n_existing, n_deleted = self.make_careerfair_employer_wrapper(careerfair.id, employers_ids_set, rows)
+            self.db_session.close()
 
         print("\n===================================== RESULT =====================================")
         print("Sucesfully Parsed Googlesheet {}".format(self.job['sheet_id']))
@@ -303,4 +305,5 @@ class CareerFairIngest:
         print("# Canceled Employers : {}\n".format(n_deleted))
         print("Link: {}\n".format(self.job['url']))
 
-        db.session.close()
+
+

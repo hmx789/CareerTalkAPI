@@ -329,11 +329,11 @@ class CareerFairEmployer(db.Model):
     def serialize(self):
         degree = Degree.query.filter_by(id=self.degree_type_id).first()
         hiring_type = HiringType.query.filter_by(id=self.hiring_type_id).first()
+        hiring_types = [hiring_type.strip() for hiring_type in hiring_type.type.split(',')]
         visa = Visa.query.filter_by(id=self.visa_type_id).first()
         employer = Employer.query.filter_by(id=self.employer_id).first()
         majors = [major.strip() for major in self.hiring_majors.split(',')]
         degrees = [degree.strip() for degree in degree.type.split(',')]
-        hiring_types = [hiring_type.strip() for hiring_type in hiring_type.type.split(',')]
         tables = [table.strip() for table in self.tables.split(',')] if self.tables is not None else []
 
         return {

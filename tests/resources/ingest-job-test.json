@@ -1,0 +1,14 @@
+{
+    "sheet_id": "some sheet",
+    "url":"some url",
+    "range": "some range",
+    "name": "Burrito",
+    "date": [2019, 12, 12],
+    "location": "Taco",
+    "start_time": [12, 0],
+    "end_time": [16, 0],
+    "address": "Barbeque",
+    "city": "Chicago",
+    "organization": "Some Burrito School",
+    "zipcode": "12345"
+}
