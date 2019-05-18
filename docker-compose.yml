@@ -1,12 +1,25 @@
-PostgreSQL:
-  restart: always
-  image: postgres:11.2
-  container_name: local-postgres
-  ports:
-    - "5432:5432"
-  environment:
-    POSTGRES_USER: careertalk
-    POSTGRES_PASSWORD: careertalk
-  volumes:
-    - "~/postgres-data:/var/lib/postgresql/data"
-    - "./scripts/:/helloscript/"
+version: '3'
+services:
+
+  PostgreSQL:
+    restart: always
+    image: postgres:11.2
+    container_name: local-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: careertalk
+      POSTGRES_PASSWORD: careertalk
+
+    volumes:
+      - ~/postgres-data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+networks:
+  app-network:
+    driver: bridge
+

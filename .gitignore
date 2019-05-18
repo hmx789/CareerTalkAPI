@@ -1,5 +1,6 @@
 .idea/
 __pycache__/
+.DS_Store
 gsheet_credentials.json
 token.json
 config.json
@@ -10,3 +11,4 @@ careertalk-firebase-admin.json
 *.pyc
 .vscode
 configs/
+token.pickle
