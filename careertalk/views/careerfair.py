@@ -1,7 +1,6 @@
 from flask import request, make_response, render_template, Blueprint
 from flask.json import jsonify
 
-# Todo: This import will call the careertalk/__init__.py again. Fix this later.
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, Student, Like, Top5
 )
@@ -62,6 +61,8 @@ def get_careerfairs():
 @careerfair.route('/v2/careerfairs')
 def v2_get_careerfairs():
     fairs = CareerFair.query.all()
+
+    print(fairs)
     fair_list = [fair.serialize for fair in fairs]
     return_obj = {
         "fairs": fair_list,
@@ -70,7 +71,7 @@ def v2_get_careerfairs():
     return jsonify(return_obj)
 
 
-@careerfair.route('/v2/<int:fair_id>/anon_user/employers', methods=['GET'])
+@careerfair.route('/v2/<string:fair_id>/anon_user/employers', methods=['GET'])
 def v2_get_companies_anonuser(fair_id):
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
     company_list = [company.serialize for company in companies]
@@ -78,7 +79,7 @@ def v2_get_companies_anonuser(fair_id):
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
 
 
-@careerfair.route('/v2/<int:fair_id>/employers', methods=['GET'])
+@careerfair.route('/v2/<string:fair_id>/employers', methods=['GET'])
 def v2_get_companies(fair_id):
     email = _check_identity_header(request.headers, "email")
     student = _get_student_by_email(email)
@@ -109,13 +110,12 @@ def v2_get_companies(fair_id):
     return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
 
 
-@careerfair.route('/v2/<int:careerfair_id>/top5', methods=['GET'])
+@careerfair.route('/v2/<string:careerfair_id>/top5', methods=['GET'])
 def top5_company(careerfair_id):
     top = Top5.query.filter_by(careerfair_id=careerfair_id).first()
     return jsonify(top.serialize)
 
-# Route
-# return version.
+
 @careerfair.route('/careertalk/version', methods=['GET'])
 def version_check():
-    return jsonify({'version': version})
+    return jsonify({'version': "2.0.1"})

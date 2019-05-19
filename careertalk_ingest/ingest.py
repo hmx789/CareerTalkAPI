@@ -2,7 +2,7 @@ import re
 
 from datetime import datetime
 
-from careertalk.models import Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType
+from careertalk.models import Employer, CareerFairEmployer, CareerFair, College, Degree, HiringType, Visa
 from careertalk_ingest.models import GoogleSheet
 
 
@@ -43,12 +43,12 @@ class CareerFairIngest:
     def get_employers_id_set_from_db(self, careerfair_id):
         if self.db_session is None:
             print("This CareerFairIngest object does not have db session yet")
-        employers = CareerFairEmployer.query.filter_by(careerfair_id=careerfair_id).all()
+        employers = CareerFairEmployer.query.filter_by(careerfair_id=str(careerfair_id)).all()
         if not employers:
             print("this careerfair does not have associated employers yet.")
             return None
 
-        return set(e.employer_id for e in employers)
+        return set(str(e.employer_id) for e in employers)
 
     def get_or_create_careerfair(self, name):
         """
@@ -64,7 +64,6 @@ class CareerFairIngest:
         return fair
 
     def make_employer(self, name, url):
-        # print("making employer")
         employer = Employer.query.filter_by(name=name).first()
         if employer:
             return employer
@@ -76,11 +75,9 @@ class CareerFairIngest:
     def get_org_or_create(self):
         org_name = self.job['organization']
         college = College.query.filter_by(name=org_name).first()
-        print(college)
         if college is None:
             print("Data Not Found: {}".format(org_name))
             print("Creating College: {}".format(org_name))
-
             college = College(name=org_name)
             self.add_data(college, True)
 
@@ -101,7 +98,8 @@ class CareerFairIngest:
         address = JOB['address']
         city = JOB['city']
         zipcode = JOB['zipcode']
-        careerfair = CareerFair(organization_id=college.id,
+
+        careerfair = CareerFair(organization_id=str(college.id),
                                 name=name,
                                 date=date,
                                 start_time=start_time,
@@ -128,22 +126,14 @@ class CareerFairIngest:
         return degree_type_id
 
     def get_visa_type_id(self, visa_type):
-        if visa_type == 'no':
-            visa_type_id = 2
-        elif visa_type == 'yes':
-            visa_type_id = 1
-        else:
-            visa_type_id = 3
-        return visa_type_id
+        return Visa.query.filter_by(type=visa_type.strip().lower()).first().id
 
     def get_hiring_type_id(self, hiring_type):
         hiring_types = [h.strip() for h in hiring_type.split(',')]
         if len(hiring_types) > 1:
-            hiring_type_id = 3
-        else:
-            hiring_type_string = hiring_types[0].upper()
-            hiring_type_id = HiringType.query.filter_by(type=hiring_type_string).first().id
-        return hiring_type_id
+            return 3
+        hiring_type_string = hiring_types[0].upper()
+        return HiringType.query.filter_by(type=hiring_type_string).first().id
 
     def make_careerfair_employer(self, columns, cf_id, e_id, tables):
 
@@ -156,12 +146,12 @@ class CareerFairIngest:
         hiring_majors = [m.strip() for m in columns[3].split(',')]
         hiring_majors_str = ', '.join(hiring_majors)
 
-        return CareerFairEmployer(employer_id=e_id,
-                                  careerfair_id=cf_id,
-                                  visa_type_id=visa_type_id,
-                                  degree_type_id=degree_type_id,
+        return CareerFairEmployer(employer_id=str(e_id),
+                                  careerfair_id=str(cf_id),
+                                  visa_type_id=str(visa_type_id),
+                                  degree_type_id=str(degree_type_id),
                                   hiring_majors=hiring_majors_str,
-                                  hiring_type_id=hiring_type_id,
+                                  hiring_type_id=str(hiring_type_id),
                                   tables=tables
                                   )
 
@@ -221,6 +211,7 @@ class CareerFairIngest:
                                                             fair_id,
                                                             employer.id,
                                                             tables)
+
         self.add_data(careerfair_employer, True)
         print("ADDED: {}, {}".format(name, url))
 
@@ -265,8 +256,8 @@ class CareerFairIngest:
             employer_name = row[0]
             employer = self.get_employer(employer_name)
 
-            if employer and employer.id in ids_set:
-                ids_set.remove(employer.id)
+            if employer and str(employer.id) in ids_set:
+                ids_set.remove(str(employer.id))
                 print("Exists Already {}: {}".format(i+1, employer.name))
                 continue
 

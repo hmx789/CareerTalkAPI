@@ -25,7 +25,7 @@ def _create_student_user(given_name, family_name, email, profile_img):
 
 
 # headers: { googleId, email, given_name, family_name, picture },
-@user.route('/v2/register/student/user')
+@user.route('/v2/register/student/user', methods=['POST'])
 def register_student_user():
     try:
         email = request.headers['email']
@@ -72,3 +72,8 @@ def v2_like_company(careerfair_id, employer_id):
     session.add(new_like)
     session.commit()
     return _message_builder('Succesfully liked an employer', 200)
+
+
+@user.route('/user/<string:id>')
+def get_user(id):
+    pass

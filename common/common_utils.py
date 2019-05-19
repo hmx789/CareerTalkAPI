@@ -8,9 +8,9 @@ def run_script(filename, conn):
     sql_commands = sql_file.split(';')
     stmts_len = 0
     for command in sql_commands:
-        if command != '\n':
-            new_string = command.strip()
-            # print("SQL: ", new_string)
+        new_string = command.strip()
+        if new_string != "":
+            print("SQL: ", new_string)
             stmts_len += 1
             conn.execute(text(new_string))
 

@@ -2,7 +2,6 @@ from flask import Flask
 
 
 version = '2.0.0'
-print('****************** LOCAL DEV MODE ******************')
 
 def create_rest(config):
     from careertalk.views import blueprints

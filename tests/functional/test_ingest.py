@@ -1,5 +1,4 @@
 import pytest
-from flask_sqlalchemy import SQLAlchemy
 
 from careertalk import create_operation
 from careertalk.models import CareerFairEmployer, CareerFair, Employer, College
@@ -7,23 +6,14 @@ from careertalk_ingest.ingest import CareerFairIngest
 from careertalk_load.models import LoadDataIntoPostgres
 from common.config import TestIngestConfig, TestLoadConfig
 
-
-class SQLiteAlchemy(SQLAlchemy):
-    def apply_driver_hacks(self, app, info, options):
-        options.update({
-            'isolation_level': 'READ UNCOMMITTED',
-        })
-        super(SQLiteAlchemy, self).apply_driver_hacks(app, info, options)
-
-
 college = """
-INSERT INTO college (name, address, city, zipcode, website, state, uuid)
-VALUES ('Some Burrito School', '1200 W Harrison St', 'Chicago', '60607', 'www.uic.edu', 'IL', uuid_generate_v4());
+INSERT INTO college (name, address, city, zipcode, website, state)
+VALUES ('Some Burrito School', '1200 W Harrison St', 'Chicago', '60607', 'www.uic.edu', 'IL');
 """
 
 careerfair = """
-INSERT INTO careerfair (organization_id, name, date, start_time, end_time, location, address, city, zipcode, uuid)
-VALUES (1, 'Burrito', '2019-12-12', '2019-12-12 12:00:00', '2019-12-12 16:00:00', 'Taco', 'Barbeque', 'Chicago', '60608', uuid_generate_v4());
+INSERT INTO careerfair (organization_id, name, date, start_time, end_time, location, address, city, zipcode)
+VALUES (1, 'Burrito', '2019-12-12', '2019-12-12 12:00:00', '2019-12-12 16:00:00', 'Taco', 'Barbeque', 'Chicago', '60608');
 """
 
 
@@ -110,27 +100,28 @@ def test_ingest_simple(_db, monkeypatch, test_ingest_config):
     serialized_schools = [s.serialize for s in schools]
 
     # The first two gets created when we initially load some data. So ignore the first two careerfairs.
-    c = serialized_careerfairs[2]
+    c = serialized_careerfairs[0]
     college = serialized_schools[1]
-    google = serialized_careerfair_employers[4]
-    netflix = serialized_careerfair_employers[5]
+    google = serialized_careerfair_employers[0]
+    netflix = serialized_careerfair_employers[1]
 
-    netflix_employer = Employer.query.filter_by(id=5).first()
+    netflix_employer = netflix["employer"]
 
+    # 2 of them are created for this test
+    assert len(serialized_careerfair_employers) == 2
 
-    # 4 of them are initially created and 2 of them are created for this test
-    assert len(serialized_careerfair_employers) == 6
-
-    # 4 of them are initially created and 1 of them(Netflix) gets created in this test.
+    # 2 of them(Netflix) gets created in this test.
     assert len(serialized_employers) == 5
 
-    # 2 of them are initially created and 1 of them gets created in this test.
-    assert len(serialized_careerfairs) == 3
+    # 1 of them gets created in this test.
+    assert len(serialized_careerfairs) == 1
 
     # 1 of them are initially created and 1 of them gets created in this test.
     assert len(serialized_schools) == 2
 
-    assert netflix_employer.company_url == 'netflix.com'
+    assert netflix_employer["company_url"] == 'netflix.com'
+    assert netflix_employer["name"] == "Netflix"
+
 
     # assert careerfair
     assert c['name'] == "Burrito"
@@ -153,7 +144,7 @@ def test_ingest_simple(_db, monkeypatch, test_ingest_config):
     assert google['hiring_majors'] == ['CS', 'ES']
     assert google['hiring_types'] == ['INT', 'FT']
     assert google['degree_requirements'] == ['BS', 'MS', 'PhD']
-    assert google['careerfair_id'] == 3
+    assert google['careerfair_id'] == str(c["id"])
 
     # assert CareerFairEmployer Netflix
     assert netflix['tables'] == []
@@ -161,7 +152,7 @@ def test_ingest_simple(_db, monkeypatch, test_ingest_config):
     assert netflix['hiring_majors'] == ['ES', 'CS']
     assert netflix['hiring_types'] == ['INT', 'FT']
     assert netflix['degree_requirements'] == ['BS', 'MS', 'PhD']
-    assert netflix['careerfair_id'] == 3
+    assert netflix['careerfair_id'] == str(c["id"])
 
     _db.session.close()
 
@@ -182,13 +173,12 @@ def test_ingest_college_fair_employers_exist(_db, monkeypatch, test_ingest_confi
 
     ingest.parse()
 
-    careerfair_employers = CareerFairEmployer.query.filter_by(careerfair_id=3).all()
+    careerfair = CareerFair.query.filter_by(name="Burrito").first()
+
+    careerfair_employers = CareerFairEmployer.query.filter_by(careerfair_id=str(careerfair.id)).all()
 
     employers = Employer.query.all()
-    print(employers)
     serialized_careerfair_employers = [ce.serialize for ce in careerfair_employers]
-    print(serialized_careerfair_employers)
 
     assert len(serialized_careerfair_employers) == 1
-
     assert len(employers) == 5

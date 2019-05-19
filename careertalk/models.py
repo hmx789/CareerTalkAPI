@@ -2,10 +2,11 @@ import uuid
 
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+import sqlalchemy
+from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import UUID
 
 db = SQLAlchemy()
-
 
 def _to_minutes(time):
     t = time.hour * 60 + time.minute
@@ -21,12 +22,11 @@ def _format_time(time):
 class Visa(db.Model):
     __tablename__ = 'visa_type'
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    type = db.Column(db.String(6), nullable=False)
+    type = Column(db.String(6), nullable=False)
 
-    def __init__(self, *args, **kw):
-        super(Visa, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Visa, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -49,12 +49,11 @@ class Visa(db.Model):
 class HiringType(db.Model):
     __tablename__ = 'hiring_type'
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    type = db.Column(db.String(20), nullable=False)
+    type = Column(db.String(20), nullable=False)
 
-    def __init__(self, *args, **kw):
-        super(HiringType, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(HiringType, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -77,12 +76,11 @@ class HiringType(db.Model):
 class Degree(db.Model):
     __tablename__ = 'degree_type'
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    type = db.Column(db.String(20), nullable=False)
+    type = Column(db.String(20), nullable=False)
 
-    def __init__(self, *args, **kw):
-        super(Degree, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Degree, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -104,19 +102,18 @@ class Degree(db.Model):
 
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    google_id = db.Column(db.String(255), unique=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    middle_name = db.Column(db.String(50))
-    personal_email = db.Column(db.String(255), unique=True)
-    profile_img = db.Column(db.String(), default='default_profile.png')
-    registered_on = db.Column(db.DateTime, default=datetime.utcnow)
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    google_id = Column(db.String(255))
+    first_name = Column(db.String(50), nullable=False)
+    last_name = Column(db.String(50), nullable=False)
+    middle_name = Column(db.String(50))
+    personal_email = Column(db.String(255))
+    profile_img = Column(db.String(), default='default_profile.png')
+    registered_on = Column(db.DateTime, default=datetime.utcnow)
 
-    def __init__(self, *args, **kw):
-        super(User, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(User, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"User('{self.first_name}', '{self.personal_email}')"
@@ -131,25 +128,24 @@ class User(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'middle_name': self.middle_name,
-            'id': self.id,
+            'id': str(self.id),
         }
 
 
 class Connection(db.Model):
     __tablename__ = 'connection'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    public_id = db.Column(db.String(255))
-    access_token = db.Column(db.String(255))
-    secret = db.Column(db.String(255))
-    id_token = db.Column(db.String(255))
-    token = db.Column(db.String)
-    os = db.Column(db.String(10))
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    user_id = Column(UUID, db.ForeignKey('user.id'))
+    public_id = Column(db.String(255))
+    access_token = Column(db.String(255))
+    secret = Column(db.String(255))
+    id_token = Column(db.String(255))
+    token = Column(db.String)
+    os = Column(db.String(10))
 
-    def __init__(self, *args, **kw):
-        super(Connection, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Connection, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Connection('{self.id}', '{self.user_id}')"
@@ -157,18 +153,17 @@ class Connection(db.Model):
 
 class Recruiter(db.Model):
     __tablename__ = 'recruiter'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-    middle_name = db.Column(db.String(100))
-    employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    work_email = db.Column(db.String(255))
-    work_phone = db.Column(db.String(16))
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    first_name = Column(db.String(100), nullable=False)
+    last_name = Column(db.String(100), nullable=False)
+    middle_name = Column(db.String(100))
+    employer_id = Column(UUID, db.ForeignKey('employer.id'))
+    work_email = Column(db.String(255))
+    work_phone = Column(db.String(16))
 
-    def __init__(self, *args, **kw):
-        super(Recruiter, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Recruiter, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Recruiter('{self.first_name}')"
@@ -183,24 +178,23 @@ class Recruiter(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'middle_name': self.middle_name,
-            'id': self.id,
+            'id': self.id
         }
 
 
 class Employer(db.Model):
     __tablename__ = 'employer'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    name = db.Column(db.String(100), nullable=False)
-    found_year = db.Column(db.String(4))
-    hq_city = db.Column(db.String(50))
-    description = db.Column(db.String())
-    logo_url = db.Column(db.String(), default='default_employer.png')
-    company_url = db.Column(db.String())
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    name = Column(db.String(100), nullable=False)
+    found_year = Column(db.String(4))
+    hq_city = Column(db.String(50))
+    description = Column(db.String())
+    logo_url = Column(db.String(), default='default_employer.png')
+    company_url = Column(db.String())
 
-    def __init__(self, *args, **kw):
-        super(Employer, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Employer, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Employer('{self.name}', '{self.company_url}')"
@@ -220,41 +214,40 @@ class Employer(db.Model):
 
 class Student(db.Model):
     __tablename__ = 'student'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    college_id = db.Column(db.Integer, db.ForeignKey('college.id'))
-    looking_hiring_type = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
-    degree = db.Column(db.Integer, db.ForeignKey('degree_type.id'))
-    graduating_date = db.Column(db.Date)
-    available_date = db.Column(db.Date)
-    github_link = db.Column(db.String(255))
-    linkedin_link = db.Column(db.String(255))
-    portfolio_link = db.Column(db.String(255))
-    school_email = db.Column(db.String(255))
-    major = db.Column(db.String(50))
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    user_id = Column(UUID, db.ForeignKey('user.id'), nullable=False)
+    college_id = Column(UUID, db.ForeignKey('college.id'))
+    looking_hiring_type = Column(db.Integer, db.ForeignKey('hiring_type.id'))
+    degree = Column(db.Integer, db.ForeignKey('degree_type.id'))
+    graduating_date = Column(db.Date)
+    available_date = Column(db.Date)
+    github_link = Column(db.String(255))
+    linkedin_link = Column(db.String(255))
+    portfolio_link = Column(db.String(255))
+    school_email = Column(db.String(255))
+    major = Column(db.String(50))
 
-    def __init__(self, *args, **kw):
-        super(Student, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Student, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Student(user_id: '{self.user_id}')"
 
     @property
     def serialize(self):
-        user = User.query.filter_by(id=self.id).first()
-        college = College.query.filter_by(id=self.college_id).first()
+        user = User.query.filter_by(uuid=self.user_id).first()
+        college = College.query.filter_by(uuid=self.college_id).first()
         college_name = 'None' if not college else college.name
-        persuing_degree = Degree.query.filter_by(id=self.degree).first()
-        persuing_hiring_type = HiringType.query.filter_by(id=self.looking_hiring_type).first()
+        pursuing_degree_id = Degree.query.filter_by(id=self.degree).first()
+        pursuing_hiring_type = HiringType.query.filter_by(id=self.looking_hiring_type).first()
 
         majors = None
         if self.major:
             majors = [major for major in self.major.split(',')]
 
         return {
-            'persuing_work_type': persuing_hiring_type,
+            'persuing_work_type': pursuing_hiring_type,
             'school_email': self.school_email,
             'portfolio_link': self.portfolio_link,
             'linkedin_link': self.linkedin_link,
@@ -262,7 +255,7 @@ class Student(db.Model):
             'available_date': self.available_date,
             'graduating_date': self.graduating_date,
             'major': majors,
-            'persuing_degree': persuing_degree,
+            'persuing_degree': pursuing_degree_id,
             'college_name': college_name,
             'last_name': user.last_name,
             'first_name': user.first_name,
@@ -272,20 +265,19 @@ class Student(db.Model):
 
 class College(db.Model):
     __tablename__ = 'college'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    name = db.Column(db.String(255))
-    address = db.Column(db.String(255))
-    city = db.Column(db.String(100))
-    zipcode = db.Column(db.String(5))
-    state = db.Column(db.String(2))
-    established = db.Column(db.Date)
-    website = db.Column(db.String(255))
-    logo_url = db.Column(db.String(255), default='default_college.png')
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    name = Column(db.String(255))
+    address = Column(db.String(255))
+    city = Column(db.String(100))
+    zipcode = Column(db.String(5))
+    state = Column(db.String(2))
+    established = Column(db.Date)
+    website = Column(db.String(255))
+    logo_url = Column(db.String(255), default='default_college.png')
 
-    def __init__(self, *args, **kw):
-        super(College, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(College, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"College('{self.name}')"
@@ -307,20 +299,19 @@ class College(db.Model):
 
 class CareerFairEmployer(db.Model):
     __tablename__ = 'careerfair_employer'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
-    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'), nullable=False)
-    recruiter_id = db.Column(db.Integer, db.ForeignKey('recruiter.id'))
-    visa_type_id = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
-    degree_type_id = db.Column(db.Integer, db.ForeignKey('degree_type.id'), nullable=False)
-    hiring_type_id = db.Column(db.Integer, db.ForeignKey('hiring_type.id'), nullable=False)
-    hiring_majors = db.Column(db.String())
-    tables = db.Column(db.String())
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"), )
+    employer_id = Column(UUID, db.ForeignKey('employer.id'), nullable=False)
+    careerfair_id = Column(UUID, db.ForeignKey('careerfair.id'), nullable=False)
+    recruiter_id = Column(UUID, db.ForeignKey('recruiter.id'))
+    visa_type_id = Column(db.Integer, db.ForeignKey('visa_type.id'))
+    degree_type_id = Column(db.Integer, db.ForeignKey('degree_type.id'), nullable=False)
+    hiring_type_id = Column(db.Integer, db.ForeignKey('hiring_type.id'), nullable=False)
+    hiring_majors = Column(db.String())
+    tables = Column(db.String())
 
-    def __init__(self, *args, **kw):
-        super(CareerFairEmployer, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(CareerFairEmployer, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"CareerFairEmployer('{self.hiring_majors}', '{self.employer_id}')"
@@ -344,31 +335,30 @@ class CareerFairEmployer(db.Model):
             'degree_requirements': degrees,
             'employer': employer.serialize,
             'careerfair_id': self.careerfair_id,
-            '_id': self.id
+            'id': self.id
         }
 
 
 class CareerFair(db.Model):
     __tablename__ = 'careerfair'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    organization_id = db.Column(db.Integer, db.ForeignKey('college.id'))
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String)
-    date = db.Column(db.DateTime, nullable=False)
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
-    location = db.Column(db.String, nullable=False)
-    address = db.Column(db.String(200))
-    city = db.Column(db.String(50))
-    zipcode = db.Column(db.String(5))
-    other_organization = db.Column(db.String(50))
-    map_url = db.Column(db.String())
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    organization_id = Column(UUID, db.ForeignKey('college.id'))
+    name = Column(db.String(100), nullable=False)
+    description = Column(db.String)
+    date = Column(db.DateTime, nullable=False)
+    start_time = Column(db.Time, nullable=False)
+    end_time = Column(db.Time, nullable=False)
+    location = Column(db.String, nullable=False)
+    address = Column(db.String(200))
+    city = Column(db.String(50))
+    zipcode = Column(db.String(5))
+    other_organization = Column(db.String(50))
+    map_url = Column(db.String())
     employers = db.relationship(CareerFairEmployer, backref='careerfair', cascade='all,delete', lazy=True)
 
-    def __init__(self, *args, **kw):
-        super(CareerFair, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(CareerFair, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Careerfair('{self.name}')"
@@ -397,15 +387,14 @@ class CareerFair(db.Model):
 
 class Like(db.Model):
     __tablename__ = 'student_like_employer'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
-    employer_id = db.Column(db.Integer, db.ForeignKey('employer.id'), nullable=False)
-    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    student_id = Column(UUID, db.ForeignKey('student.id'), nullable=False)
+    employer_id = Column(UUID, db.ForeignKey('employer.id'), nullable=False)
+    careerfair_id = Column(UUID, db.ForeignKey('careerfair.id'))
 
-    def __init__(self, *args, **kw):
-        super(Like, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Like, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Like('{self.id}')"
@@ -413,31 +402,30 @@ class Like(db.Model):
 
 class Top5(db.Model):
     __tablename__ = 'top_five_employers'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    top1 = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    top2 = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    top3 = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    top4 = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    top5 = db.Column(db.Integer, db.ForeignKey('employer.id'))
-    careerfair_id = db.Column(db.Integer, db.ForeignKey('careerfair.id'))
-    updated_on = db.Column(db.DateTime, default=datetime.utcnow)
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    top1 = Column(UUID, db.ForeignKey('employer.id'))
+    top2 = Column(UUID, db.ForeignKey('employer.id'))
+    top3 = Column(UUID, db.ForeignKey('employer.id'))
+    top4 = Column(UUID, db.ForeignKey('employer.id'))
+    top5 = Column(UUID, db.ForeignKey('employer.id'))
+    careerfair_id = Column(UUID, db.ForeignKey('careerfair.id'))
+    updated_on = Column(db.DateTime, default=datetime.utcnow)
 
-    def __init__(self, *args, **kw):
-        super(Top5, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Top5, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Top5('{self.id}')"
 
     @property
     def serialize(self):
-        employer1 = Employer.query.get(self.top1)
-        employer2 = Employer.query.get(self.top2)
-        employer3 = Employer.query.get(self.top3)
-        employer4 = Employer.query.get(self.top4)
-        employer5 = Employer.query.get(self.top5)
-        careerfair = CareerFair.query.get(self.careerfair_id)
+        employer1 = Employer.query.filter_by(uuid=self.top1).first()
+        employer2 = Employer.query.filter_by(uuid=self.top2).first()
+        employer3 = Employer.queryfilter_by(uuid=self.top3).first()
+        employer4 = Employer.queryfilter_by(uuid=self.top4).first()
+        employer5 = Employer.queryfilter_by(uuid=self.top5).first()
+        careerfair = CareerFair.queryfilter_by(uuid=self.careerfair_id).first()
 
         return {
             'top1': employer1.serialize,
@@ -456,20 +444,19 @@ class Top5(db.Model):
 
 class Company(db.Model):
     __tablename__ = 'company'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String())
-    hiring_types = db.Column(db.Integer, db.ForeignKey('hiring_type.id'))
-    hiring_majors = db.Column(db.String())
-    degree = db.Column(db.Integer, db.ForeignKey('degree_type.id'))
-    visa = db.Column(db.Integer, db.ForeignKey('visa_type.id'))
-    fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'))
-    company_url = db.Column(db.String())
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    name = Column(db.String(100), nullable=False)
+    description = Column(db.String())
+    hiring_types = Column(db.Integer, db.ForeignKey('hiring_type.id'))
+    hiring_majors = Column(db.String())
+    degree = Column(db.Integer, db.ForeignKey('degree_type.id'))
+    visa = Column(db.Integer, db.ForeignKey('visa_type.id'))
+    fair_id = Column(UUID, db.ForeignKey('fair.id'))
+    company_url = Column(db.String())
 
-    def __init__(self, *args, **kw):
-        super(Company, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Company, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     @property
     def serialize(self):
@@ -478,7 +465,7 @@ class Company(db.Model):
         types = [['INT'], ['FT'], ['INT', 'FT']]
         visa = ['yes', 'no', 'maybe']
         majors = [major.strip() for major in self.hiring_majors.split(',')]
-        tables = CareerFairTable.query.filter_by(id=self.id, fair_id=self.fair_id).all()
+        tables = CareerFairTable.query.filter_by(fair_id=self.fair_id).all()
 
         # tables = db_session.query(CareerFairTable)\
         #     .filter(self.id == CareerFairTable.company_id)\
@@ -504,36 +491,34 @@ class Company(db.Model):
 
 class CareerFairTable(db.Model):
     __tablename__ = 'fair_table'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-    fair_id = db.Column(db.Integer, db.ForeignKey('fair.id'))
-    table_number = db.Column(db.Integer)
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    company_id = Column(UUID, db.ForeignKey('company.id'))
+    fair_id = Column(UUID, db.ForeignKey('fair.id'))
+    table_number = Column(db.Integer)
     fair = db.relationship('Fair')
     company = db.relationship('Company')
 
-    def __init__(self, *args, **kw):
-        super(CareerFairTable, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(CareerFairTable, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
 
 class Fair(db.Model):
-    # __tablename__ = 'fair'
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, default=uuid.uuid4())
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=False)
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
-    location = db.Column(db.String)
-    organization = db.Column(db.String(250))
+    __tablename__ = 'fair'
+    id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    name = Column(db.String(100), nullable=False)
+    description = Column(db.String)
+    start_date = Column(db.Date, nullable=False)
+    end_date = Column(db.Date, nullable=False)
+    start_time = Column(db.Time, nullable=False)
+    end_time = Column(db.Time, nullable=False)
+    location = Column(db.String)
+    organization = Column(db.String(250))
     companies = db.relationship('Company', backref='fair', cascade="all,delete", lazy=True)
 
-    def __init__(self, *args, **kw):
-        super(Fair, self).__init__(*args, **kw)
-        self.uuid = uuid.uuid4()
+    # def __init__(self, *args, **kw):
+    #     super(Fair, self).__init__(*args, **kw)
+    #     self.id = uuid.uuid4()
 
     def __repr__(self):
         return f"Fair('{self.name}', '{self.employer_id}')"
