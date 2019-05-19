@@ -111,7 +111,7 @@ class User(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'middle_name': self.middle_name,
-            'id': str(self.id),
+            'id': str(self.id)
         }
 
 

@@ -9,9 +9,16 @@ user = Blueprint('user', __name__)
 session = db.session
 
 
-def _create_student_user(given_name, family_name, email, profile_img):
+def _create_student_user(given_name, family_name, email, profile_img, google_id):
     # Create an User
-    user = User(first_name=given_name, last_name=family_name, personal_email=email, profile_img=profile_img)
+    user = User(
+        first_name=given_name,
+        last_name=family_name,
+        personal_email=email,
+        profile_img=profile_img,
+        google_id=google_id
+    )
+
     # Store the new user to the database.
     session.add(user)
     # Flush the session to get the user.id
@@ -32,7 +39,7 @@ def register_student_user():
         given_name = request.headers['given_name']
         family_name = request.headers['family_name']
         profile_img = request.headers['picture']
-        id = request.headers['id']
+        google_id = request.headers['google_id']
     except KeyError as err:
         return _message_builder('Missing values in the header. {}'.format(err), 400)
 
@@ -43,7 +50,7 @@ def register_student_user():
 
     # Check if the user already exists
     if user is None:
-        _create_student_user(given_name, family_name, email, profile_img)
+        _create_student_user(given_name, family_name, email, profile_img, google_id)
         return _message_builder("Successfully registered a student : {}".format(email), 200)
 
     return _message_builder("This student user already exists", 200)

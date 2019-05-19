@@ -24,9 +24,9 @@ def _message_builder(message, code):
 def _check_identity_header(headers, key):
     """
 
-    :param rq: Flask request object
-    :param key: key_header
-    :return:
+    :param headers: Request headers
+    :param key: Key
+    :return: Header value
     """
     try:
         val = headers[key]
