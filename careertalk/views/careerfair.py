@@ -5,7 +5,7 @@ from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, Student, Like, Top5
 )
 from common.common_utils import _check_identity_header
-from common.getters import _get_student_by_email
+from common.getters import _get_student_by_user_id
 
 careerfair = Blueprint('careerfair', __name__)
 
@@ -81,15 +81,15 @@ def v2_get_companies_anonuser(fair_id):
 
 @careerfair.route('/v2/<string:fair_id>/employers', methods=['GET'])
 def v2_get_companies(fair_id):
-    email = _check_identity_header(request.headers, "email")
-    student = _get_student_by_email(email)
+    user_id = _check_identity_header(request.headers, "id")
+    student = _get_student_by_user_id(user_id)
     if not student:
         response = make_response(jsonify({'message': 'This user is not student'}))
         return response
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
 
     # Get liked company and make them as a set
-    liked_companies = Like.query.filter_by(student_id=student.id).filter_by(careerfair_id=fair_id).all()
+    liked_companies = Like.query.filter_by(student_id=str(student.id)).filter_by(careerfair_id=str(fair_id)).all()
     liked_company_ids = set()
 
     # Iterate over the liked_companies list and put id into the set.

@@ -3,7 +3,7 @@ from flask import request
 
 from careertalk.models import db, User, Student, Like
 from common.common_utils import _message_builder, _check_identity_header
-from common.getters import _get_student_by_email
+from common.getters import _get_student_by_user_id
 
 user = Blueprint('user', __name__)
 session = db.session
@@ -32,10 +32,11 @@ def register_student_user():
         given_name = request.headers['given_name']
         family_name = request.headers['family_name']
         profile_img = request.headers['picture']
+        id = request.headers['id']
     except KeyError as err:
         return _message_builder('Missing values in the header. {}'.format(err), 400)
 
-    user = _get_student_by_email(email)
+    user = _get_student_by_user_id(id)
 
     # todo: when we have faculty or recruiter login functionality
     #      we need more logic to create each model.
@@ -50,8 +51,8 @@ def register_student_user():
 
 @user.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
 def v2_like_company(careerfair_id, employer_id):
-    email = _check_identity_header(request.headers, "email")
-    student = _get_student_by_email(email)
+    id = _check_identity_header(request.headers, "id")
+    student = _get_student_by_user_id(id)
     # check if this user already liked the company
     like = Like.query \
         .filter_by(student_id=student.id) \
