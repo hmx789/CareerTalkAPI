@@ -203,8 +203,8 @@ class Student(db.Model):
 
     @property
     def serialize(self):
-        user = User.query.filter_by(uuid=self.user_id).first()
-        college = College.query.filter_by(uuid=self.college_id).first()
+        user = User.query.filter_by(id=self.user_id).first()
+        college = College.query.filter_by(id=self.college_id).first()
         college_name = 'None' if not college else college.name
         pursuing_degree_id = Degree.query.filter_by(id=self.degree).first()
         pursuing_hiring_type = HiringType.query.filter_by(id=self.looking_hiring_type).first()

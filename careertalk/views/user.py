@@ -1,7 +1,8 @@
 from flask import Blueprint
 from flask import request
+from flask.json import jsonify
 
-from careertalk.models import db, User, Student, Like
+from careertalk.models import db, User, Student, Like, User
 from common.common_utils import _message_builder, _check_identity_header
 from common.getters import _get_student_by_user_id
 
@@ -10,6 +11,9 @@ session = db.session
 
 
 def _create_student_user(given_name, family_name, email, profile_img, google_id):
+    """
+    Create an user and a student account.
+    """
     # Create an User
     user = User(
         first_name=given_name,
@@ -24,14 +28,13 @@ def _create_student_user(given_name, family_name, email, profile_img, google_id)
     # Flush the session to get the user.id
     session.flush()
     # Create a Student
-    student = Student(user_id=user.id)
+    student = Student(user_id=str(user.id))
     session.add(student)
 
     session.commit()
     return student
 
 
-# headers: { googleId, email, given_name, family_name, picture },
 @user.route('/v2/register/student/user', methods=['POST'])
 def register_student_user():
     try:
@@ -40,20 +43,19 @@ def register_student_user():
         family_name = request.headers['family_name']
         profile_img = request.headers['picture']
         google_id = request.headers['google_id']
+        job = request.headers['job']
     except KeyError as err:
-        return _message_builder('Missing values in the header. {}'.format(err), 400)
+        return _message_builder('Missing headers. {}'.format(err), 400)
 
-    user = _get_student_by_user_id(id)
+
+    user = User.query.filter_by(google_id=google_id).first()
+    if user:
+        return jsonify(user=user.serialize)
 
     # todo: when we have faculty or recruiter login functionality
     #      we need more logic to create each model.
-
-    # Check if the user already exists
-    if user is None:
-        _create_student_user(given_name, family_name, email, profile_img, google_id)
-        return _message_builder("Successfully registered a student : {}".format(email), 200)
-
-    return _message_builder("This student user already exists", 200)
+    user = _create_student_user(given_name, family_name, email, profile_img, google_id)
+    return jsonify(user=user.serialize)
 
 
 @user.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])

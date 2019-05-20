@@ -77,6 +77,16 @@ class IngestConfig(Config):
         self.sheet_link_field = "sheets/data/rowData/values/hyperlink"
 
 
+class TestRestConfig():
+    DEBUG = False
+    Testing = True
+    ENV = 'development'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = test_database
+    BCRYPT_LOG_ROUNDS = 4
+    WTF_CSRF_ENABLED = False
+
+
 class TestIngestConfig():
     DEBUG = False
     Testing = True
