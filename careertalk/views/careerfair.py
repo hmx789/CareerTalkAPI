@@ -1,5 +1,6 @@
 from flask import request, make_response, render_template, Blueprint
 from flask.json import jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, Student, Like, Top5
@@ -80,8 +81,11 @@ def v2_get_companies_anonuser(fair_id):
 
 
 @careerfair.route('/v2/<string:fair_id>/employers', methods=['GET'])
+@jwt_required
 def v2_get_companies(fair_id):
-    user_id = _check_identity_header(request.headers, "id")
+    current_user = get_jwt_identity()
+    user_id = current_user["userId"]
+
     student = _get_student_by_user_id(user_id)
     if not student:
         response = make_response(jsonify({'message': 'This user is not student'}))
@@ -111,6 +115,7 @@ def v2_get_companies(fair_id):
 
 
 @careerfair.route('/v2/<string:careerfair_id>/top5', methods=['GET'])
+@jwt_required
 def top5_company(careerfair_id):
     top = Top5.query.filter_by(careerfair_id=careerfair_id).first()
     return jsonify(top.serialize)

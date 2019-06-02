@@ -1,8 +1,9 @@
 from flask import Blueprint
 from flask import request
 from flask.json import jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from careertalk.models import db, User, Student, Like, User
+from careertalk.models import db, Student, Like, User
 from common.common_utils import _message_builder, _check_identity_header
 from common.getters import _get_student_by_user_id
 
@@ -59,8 +60,10 @@ def register_student_user():
 
 
 @user.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
+@jwt_required
 def v2_like_company(careerfair_id, employer_id):
-    id = _check_identity_header(request.headers, "id")
+    current_user = get_jwt_identity()
+    id = current_user["userId"]
     student = _get_student_by_user_id(id)
     # check if this user already liked the company
     like = Like.query \
