@@ -87,6 +87,12 @@ def v2_like_company(careerfair_id, employer_id):
     return _message_builder('Succesfully liked an employer', 200)
 
 
-@user.route('/user/<string:id>')
-def get_user(id):
-    pass
+@user.route('/get/user')
+def get_user():
+    current_user = get_jwt_identity()
+    id = current_user["userId"]
+
+    user = User.query.filter_by(id=id).first()
+    if not user:
+        return _message_builder('User does not exist', 404)
+    return jsonify(user=user.serialize)
