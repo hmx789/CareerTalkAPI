@@ -1,11 +1,10 @@
-from flask import request, make_response, render_template, Blueprint
+from flask import make_response, render_template, Blueprint
 from flask.json import jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_raw_jwt
 
 from careertalk.models import (
     Fair, Company, CareerFair, CareerFairEmployer, Student, Like, Top5
 )
-from common.common_utils import _check_identity_header
 from common.getters import _get_student_by_user_id
 
 careerfair = Blueprint('careerfair', __name__)
@@ -83,13 +82,12 @@ def v2_get_companies_anonuser(fair_id):
 @careerfair.route('/v2/<string:fair_id>/employers', methods=['GET'])
 @jwt_required
 def v2_get_companies(fair_id):
-    current_user = get_jwt_identity()
+    current_user = get_raw_jwt()
     user_id = current_user["userId"]
 
     student = _get_student_by_user_id(user_id)
     if not student:
-        response = make_response(jsonify({'message': 'This user is not student'}))
-        return response
+        return make_response("This user is not student.")
     companies = CareerFairEmployer.query.filter_by(careerfair_id=fair_id).all()
 
     # Get liked company and make them as a set
@@ -109,9 +107,11 @@ def v2_get_companies(fair_id):
         c["is_liked"] = True if c["employer"]["id"] in liked_company_ids else False
         company_list.append(c)
 
-    fair = CareerFair.query.filter_by(id=fair_id).first().serialize
+    fair = CareerFair.query.filter_by(id=fair_id).first()
+    if not fair:
+        return make_response("This careerfair does not exist", 404)
 
-    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair)
+    return jsonify(companies=company_list, num_of_companies=len(company_list), fair=fair.serialize)
 
 
 @careerfair.route('/v2/<string:careerfair_id>/top5', methods=['GET'])

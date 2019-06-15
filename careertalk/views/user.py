@@ -1,10 +1,10 @@
 from flask import Blueprint
 from flask import request
 from flask.json import jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_raw_jwt
 
 from careertalk.models import db, Student, Like, User
-from common.common_utils import _message_builder, _check_identity_header
+from common.common_utils import _message_builder
 from common.getters import _get_student_by_user_id
 
 user = Blueprint('user', __name__)
@@ -62,7 +62,7 @@ def register_student_user():
 @user.route('/v2/like/<int:careerfair_id>/<int:employer_id>', methods=['POST'])
 @jwt_required
 def v2_like_company(careerfair_id, employer_id):
-    current_user = get_jwt_identity()
+    current_user = get_raw_jwt()
     id = current_user["userId"]
     student = _get_student_by_user_id(id)
     # check if this user already liked the company
@@ -88,10 +88,10 @@ def v2_like_company(careerfair_id, employer_id):
 
 
 @user.route('/get/user')
+@jwt_required
 def get_user():
-    current_user = get_jwt_identity()
+    current_user = get_raw_jwt()
     id = current_user["userId"]
-
     user = User.query.filter_by(id=id).first()
     if not user:
         return _message_builder('User does not exist', 404)
