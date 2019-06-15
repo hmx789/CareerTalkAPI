@@ -7,6 +7,8 @@ from careertalk.models import db, Student, Like, User
 from common.common_utils import _message_builder
 from common.getters import _get_student_by_user_id
 
+from sqlalchemy.exc import DataError
+
 user = Blueprint('user', __name__)
 session = db.session
 
@@ -38,23 +40,24 @@ def _create_student_user(given_name, family_name, email, profile_img, google_id)
 
 @user.route('/v2/register/student/user', methods=['POST'])
 def register_student_user():
+    print(request)
     try:
         email = request.headers['email']
         given_name = request.headers['given_name']
         family_name = request.headers['family_name']
         profile_img = request.headers['picture']
         google_id = request.headers['google_id']
-        job = request.headers['job']
+        job = request.headers['job'] # currently not used.
     except KeyError as err:
         return _message_builder('Missing headers. {}'.format(err), 400)
 
-
     user = User.query.filter_by(google_id=google_id).first()
     if user:
+        print("This user already exists")
         return jsonify(user=user.serialize)
 
-    # todo: when we have faculty or recruiter login functionality
-    #      we need more logic to create each model.
+    print("creating user ")
+    # TODO: when we have faculty or recruiter login functionality, we need more logic to create each model.
     user = _create_student_user(given_name, family_name, email, profile_img, google_id)
     return jsonify(user=user.serialize)
 
@@ -87,12 +90,15 @@ def v2_like_company(careerfair_id, employer_id):
     return _message_builder('Succesfully liked an employer', 200)
 
 
-@user.route('/get/user')
+@user.route('/get/user', methods=['GET'])
 @jwt_required
 def get_user():
     current_user = get_raw_jwt()
-    id = current_user["userId"]
-    user = User.query.filter_by(id=id).first()
-    if not user:
+    user_id = current_user["userId"]
+    try:
+        user = User.query.filter_by(id=user_id).first()
+    # when wrong uuid is used, the database server explodes with type error.
+    except DataError:
+        print("This user does not exist")
         return _message_builder('User does not exist', 404)
     return jsonify(user=user.serialize)

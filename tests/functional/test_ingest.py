@@ -51,7 +51,6 @@ def _db():
         _init_test_data_load()
         yield db
         db.session.close()
-        print("hello")
         db.drop_all()
 
 
@@ -163,8 +162,6 @@ def test_ingest_college_fair_employers_exist(_db, monkeypatch, test_ingest_confi
     - Test if ingest utilizes already existing employer information.
     - Test when there are duplicates in google sheet, create only one.
     """
-    global college
-    global careerfair
 
     ingest = CareerFairIngest(ingest_config=test_ingest_config)
 

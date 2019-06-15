@@ -14,6 +14,7 @@ local_database = 'postgresql://{}:{}@{}:{}/{}'.format('careertalk',
                                                       '5432',
                                                       'careertalk')
 
+
 def _get_config(path):
     with open(path, 'r') as f:
         config = json.load(f)
@@ -27,14 +28,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = env.get('SECRET_KEY') or "super secret key"
     SQLALCHEMY_DATABASE_URI = env.get('DATABASE_URL') or local_database
-
-
-
-class CareerTalkConfig(Config):
-
-    def __init__(self):
-        Config.__init__(self)
-        self.VERSION = "2.0.1"
+    JWT_IDENTITY_CLAIM = 'userId'
 
 
 class LoadConfig(Config):
@@ -81,6 +75,8 @@ class TestRestConfig():
     DEBUG = False
     Testing = True
     ENV = 'development'
+    SECRET_KEY = "super secret key"
+    JWT_IDENTITY_CLAIM = 'userId'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = test_database
     BCRYPT_LOG_ROUNDS = 4

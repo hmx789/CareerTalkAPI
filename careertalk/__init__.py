@@ -6,10 +6,7 @@ version = '2.0.0'
 def create_rest(config):
     from careertalk.views import blueprints
     from careertalk.models import db
-    from flask_jwt_extended import (
-        JWTManager, jwt_required, create_access_token,
-        get_jwt_identity
-    )
+    from flask_jwt_extended import JWTManager
 
     print("CREATE REST API.")
     # TODO: In production we need one more line of code that loads
