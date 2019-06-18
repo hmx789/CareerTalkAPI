@@ -1,56 +1,12 @@
-import jwt
 import pytest
 
-from careertalk import create_rest
-from careertalk.models import db, User
-from careertalk_load.models import LoadDataIntoPostgres
-from common.config import TestRestConfig, TestLoadConfig
+from careertalk.models import User, CareerFair, Employer, Like, Student
+from tests.common import _init_test_data_load, test_client, _db, _send_post_for_private_endpoint, \
+    _send_get_for_private_endpoint
 
-
-
-@pytest.fixture(scope='module')
-def test_client():
-    flask_app = create_rest(TestRestConfig())
-
-    testing_client = flask_app.test_client()
-    testing_client.get()
-
-    # Establish an application context before running the tests.
-    ctx = flask_app.app_context()
-    ctx.push()
-
-    yield testing_client  # this is where the testing happens!
-
-    ctx.pop()
-
-"""
-def _db():
-    app, db = create_operation(TestIngestConfig(), "Test")
-    with app.app_context():
-        db.create_all()
-        _init_test_data_load()
-        yield db
-        db.session.close()
-        db.drop_all()
-        
-        """
-
-# TODO: Tech dept this database and _init_test_data_load should be moved to the library.
-@pytest.fixture(scope='module')
-def _db():
-    db.create_all()
-    _init_test_data_load()
-    yield db
-    db.session.close()
-    db.drop_all()
-
-
-def _init_test_data_load():
-    test_load_config = TestLoadConfig()
-    load = LoadDataIntoPostgres(test_load_config)
-
-    print("Initiating Database for Functional Test")
-    load.load_schema_using_alchemy()
+print(_init_test_data_load)
+print(test_client)
+print(_db)
 
 
 @pytest.fixture(scope='module')
@@ -173,32 +129,55 @@ def test_register_user_student(test_client, _db):
     assert response.status_code == 200
 
 
-def _make_user_response_with_id(test_client, user_id):
-    USER_ENDPOINT = '/get/user'
-    payload = {'userId': user_id}
-    jwt_str = 'Bearer ' + jwt.encode(payload, 'super secret key').decode('ASCII')
-    return test_client.get(USER_ENDPOINT, headers={'Authorization': jwt_str})
-
-
 def test_get_user(test_client, _db):
+    ENDPOINT = '/get/user'
     existing_test_user = User.query.filter_by(first_name='Seho').first()
-    response = _make_user_response_with_id(test_client, str(existing_test_user.id))
-    user_response_json = response.get_json()
-
+    response = _send_get_for_private_endpoint(ENDPOINT, test_client, str(existing_test_user.id))
+    json = response.get_json()
     assert response.status_code == 200
-    assert user_response_json['user']['first_name'] == 'Seho'
-    assert user_response_json['user']['google_id'] is None
-    assert user_response_json['user']['last_name'] == 'Lim'
-    assert user_response_json['user']['middle_name'] is None
-    assert user_response_json['user']['personal_email'] == 'seho@gmail.com'
-    assert user_response_json['user']['profile_url'] == 'default_profile.png'
+    assert json['first_name'] == 'Seho'
+    assert json['google_id'] is None
+    assert json['last_name'] == 'Lim'
+    assert json['middle_name'] is None
+    assert json['personal_email'] == 'seho@gmail.com'
+    assert json['profile_url'] == 'default_profile.png'
+
 
     # CASE: Test with weird jwt
     response = test_client.get('/get/user', headers={'Authorization': 'weird string'})
     # HTTP 422: UNPROCESSABLE ENTITY
     assert response.status_code == 422
-
     # CASE: wrong UUID
-    response = _make_user_response_with_id(test_client, 'some weird id')
-    assert response.status_code == 404
-    assert b'User does not exist' in response.data
+
+    response = _send_get_for_private_endpoint(ENDPOINT, test_client, 'some weird id')
+    assert response.status_code == 400
+    assert b'Bad request' in response.data
+
+
+def test_v2_like_company(test_client, _db):
+    careerfair = CareerFair.query.filter_by(name='test careerfair').first()
+    careerfair_id = str(careerfair.id)
+    employer = Employer.query.filter_by(name='Google').first()
+    employer_id = str(employer.id)
+    existing_test_user_id = str(User.query.filter_by(first_name='Seho').first().id)
+    seho_student_id = str(Student.query.filter_by(user_id=existing_test_user_id).first().id)
+    ENDPOINT = '/v2/like/{}/{}'.format(careerfair_id, employer_id)
+
+    # CASE: like an employee
+    response = _send_post_for_private_endpoint(ENDPOINT, test_client, existing_test_user_id)
+    assert response.status_code == 200
+
+    like = Like.query.filter_by(employer_id=employer_id, careerfair_id=careerfair_id, student_id=seho_student_id).first()
+
+    assert like.careerfair_id == careerfair_id
+    assert like.employer_id == employer_id
+    assert like.student_id == seho_student_id
+
+    # CASE: dis like the employee (toggle)
+    response = _send_post_for_private_endpoint(ENDPOINT, test_client, existing_test_user_id)
+    assert response.status_code == 200
+
+    like = Like.query.filter_by(employer_id=employer_id, careerfair_id=careerfair_id, student_id=seho_student_id).first()
+    assert like == None
+
+

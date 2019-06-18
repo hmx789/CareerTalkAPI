@@ -48,7 +48,7 @@ class IngestConfig(Config):
     def __init__(self):
         Config.__init__(self)
         # TODO: later one this should be just base location of all the jobs.
-        if self.DEBUG == "True":
+        if self.DEBUG == True:
             self.credentials = _get_config("configs/ingest-credentials.json")
         else:
             self.credentials = {

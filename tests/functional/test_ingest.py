@@ -99,7 +99,7 @@ def test_ingest_simple(_db, monkeypatch, test_ingest_config):
     serialized_schools = [s.serialize for s in schools]
 
     # The first two gets created when we initially load some data. So ignore the first two careerfairs.
-    c = serialized_careerfairs[0]
+    c = serialized_careerfairs[1]
     college = serialized_schools[1]
     google = serialized_careerfair_employers[0]
     netflix = serialized_careerfair_employers[1]
@@ -112,8 +112,8 @@ def test_ingest_simple(_db, monkeypatch, test_ingest_config):
     # 2 of them(Netflix) gets created in this test.
     assert len(serialized_employers) == 5
 
-    # 1 of them gets created in this test.
-    assert len(serialized_careerfairs) == 1
+    # 1 of them gets created in this test and 1 of them gets created from sql script.
+    assert len(serialized_careerfairs) == 2
 
     # 1 of them are initially created and 1 of them gets created in this test.
     assert len(serialized_schools) == 2

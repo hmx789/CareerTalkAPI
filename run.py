@@ -23,7 +23,7 @@ if (len(sys.argv) > 1 and sys.argv[1] == 'app') or env.get('DEBUG') == 'False':
     # scheduler.add_job(calculate_top5, 'interval', hours=5)
     # scheduler.add_job(ingest.parse, 'interval', hours=12)
     # scheduler.start()
-    app.run(debug=True, use_reloader=True)
+    # app.run(debug=True, use_reloader=True)
 
 if len(sys.argv) == 2:
 
@@ -31,6 +31,7 @@ if len(sys.argv) == 2:
         from careertalk_ingest.ingest import CareerFairIngest
 
         ingest_config = IngestConfig()
+        print(ingest_config)
 
         ingest = CareerFairIngest(ingest_config=ingest_config)
 

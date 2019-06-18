@@ -282,8 +282,8 @@ class CareerFairEmployer(db.Model):
         hiring_types = [hiring_type.strip() for hiring_type in hiring_type.type.split(',')]
         visa = Visa.query.filter_by(id=self.visa_type_id).first()
         employer = Employer.query.filter_by(id=self.employer_id).first()
-        majors = [major.strip() for major in self.hiring_majors.split(',')]
-        degrees = [degree.strip() for degree in degree.type.split(',')]
+        majors = [major.strip() for major in self.hiring_majors.split(',')] if self.hiring_majors else []
+        degrees = [degree.strip() for degree in degree.type.split(',')] if degree else []
         tables = [table.strip() for table in self.tables.split(',')] if self.tables is not None else []
 
         return {
@@ -293,8 +293,8 @@ class CareerFairEmployer(db.Model):
             'hiring_types': hiring_types,
             'degree_requirements': degrees,
             'employer': employer.serialize,
-            'careerfair_id': self.careerfair_id,
-            'id': self.id
+            'careerfair_id': str(self.careerfair_id),
+            'id': str(self.id)
         }
 
 
@@ -313,6 +313,7 @@ class CareerFair(db.Model):
     zipcode = Column(db.String(5))
     other_organization = Column(db.String(50))
     map_url = Column(db.String())
+    logo_url = Column(db.String(), default='default_careerfair_logo.png')
     employers = db.relationship(CareerFairEmployer, backref='careerfair', cascade='all,delete', lazy=True)
 
     def __repr__(self):
@@ -322,10 +323,11 @@ class CareerFair(db.Model):
     def serialize(self):
         formatted_start_time = _format_time(self.start_time)
         formatted_end_time = _format_time(self.end_time)
+        college = College.query.get(self.organization_id)
         return {
             'id': self.id,
             'name': self.name,
-            'organization_id': self.organization_id,
+            'organization_name': college.name,
             'description': self.description,
             'date': self.date.strftime("%m/%d/%Y"),
             'start_time': formatted_start_time,
@@ -336,6 +338,7 @@ class CareerFair(db.Model):
             'zipcode': self.zipcode,
             'other_organization': self.other_organization,
             'map_url': self.map_url,
+            'logo_url': self.logo_url,
             'num_of_employers': len(self.employers)
         }
 
@@ -345,7 +348,7 @@ class Like(db.Model):
     id = Column(UUID(as_uuid=True),  primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
     student_id = Column(UUID, db.ForeignKey('student.id'), nullable=False)
     employer_id = Column(UUID, db.ForeignKey('employer.id'), nullable=False)
-    careerfair_id = Column(UUID, db.ForeignKey('careerfair.id'))
+    careerfair_id = Column(UUID, db.ForeignKey('careerfair.id'), nullable=False)
 
     def __repr__(self):
         return f"Like('{self.id}')"
@@ -367,12 +370,12 @@ class Top5(db.Model):
 
     @property
     def serialize(self):
-        employer1 = Employer.query.filter_by(uuid=self.top1).first()
-        employer2 = Employer.query.filter_by(uuid=self.top2).first()
-        employer3 = Employer.queryfilter_by(uuid=self.top3).first()
-        employer4 = Employer.queryfilter_by(uuid=self.top4).first()
-        employer5 = Employer.queryfilter_by(uuid=self.top5).first()
-        careerfair = CareerFair.queryfilter_by(uuid=self.careerfair_id).first()
+        employer1 = Employer.query.get(self.top1)
+        employer2 = Employer.query.get(self.top2)
+        employer3 = Employer.query.get(self.top3)
+        employer4 = Employer.query.get(self.top4)
+        employer5 = Employer.query.get(self.top5)
+        careerfair = CareerFair.query.filter_by(uuid=self.careerfair_id).first()
 
         return {
             'top1': employer1.serialize,
@@ -382,6 +385,28 @@ class Top5(db.Model):
             'top5': employer5.serialize,
             'careerfair': careerfair.serialize
         }
+
+
+class CareerfairEmployerNote(db.Model):
+    __tablename__ = 'careerfair_employer_note'
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=sqlalchemy.text("uuid_generate_v4()"))
+    user_id = Column(UUID, db.ForeignKey('user.id'), nullable=False)
+    careerfair_employer_id = Column(UUID, db.ForeignKey('careerfair_employer.id'), nullable=False)
+    careerfair_id = Column(UUID, db.ForeignKey('careerfair.id'), nullable=False)
+    note = Column(db.String)
+    updated_on = Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"CareerfairEmployerNote('{self.id}', " \
+            f"'{self.user_id}', " \
+            f"'{self.careerfair_employer_id}', " \
+            f"'{self.careerfair_id}', " \
+            f"'{self.note}', " \
+            f"'{self.updated_on}')"
+
+    @property
+    def serialize(self):
+        return {'note': self.note}
 
 
 # ------------------------------------------------------------------------------

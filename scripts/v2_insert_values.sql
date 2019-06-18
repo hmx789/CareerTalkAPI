@@ -34,6 +34,21 @@ VALUES ('maybe');
 INSERT INTO college (id, name, address, city, zipcode, website, state)
 VALUES (uuid_generate_v4(), 'University of Illinois at Chicago', '1200 W Harrison St', 'Chicago', '60607', 'www.uic.edu', 'IL');
 
+INSERT INTO careerfair(
+	id, organization_id, name, description, date, start_time, end_time, location, address, city, zipcode)
+	VALUES (
+	uuid_generate_v4(),
+	(select id from college where city = 'Chicago' limit 1),
+	'test careerfair',
+	'test careerfair description',
+	now(),
+	now(),
+	now(),
+	'test location',
+	'test address',
+	'test city',
+	'123');
+
 INSERT INTO public.user (id, first_name, last_name, personal_email, profile_img, registered_on)
 VALUES (uuid_generate_v4(), 'Seho', 'Lim', 'seho@gmail.com', 'default_profile.png', now() at time zone 'utc');
 
