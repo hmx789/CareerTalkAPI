@@ -1,18 +1,19 @@
 from flask import Flask
 
-
 version = '2.0.0'
-print('****************** LOCAL DEV MODE ******************')
+
 
 def create_rest(config):
     from careertalk.views import blueprints
     from careertalk.models import db
+    from flask_jwt_extended import JWTManager
 
     print("CREATE REST API.")
     # TODO: In production we need one more line of code that loads
     #      environment variables and overrides the app configuration.
     app = _create_app(config)
     db.init_app(app)
+    jwt = JWTManager(app)
 
     # register all the blueprints.
     for bp in blueprints:

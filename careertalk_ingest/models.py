@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 
-def _open_jobs(path):
+def _open_json(path):
     """
     :param path: This is path for the ingest-job.
     :return: Return python dictionary of ingest-job.
@@ -25,12 +25,10 @@ class GoogleSheet:
     """
     Google Sheet API wrapper class.
     """
-    SHEET_LINK_FIELD = 'sheets/data/rowData/values/hyperlink'
 
     def __init__(self, ingest_config):
         self.config = ingest_config
-        self.job = _open_jobs(self.config.work_path)
-        self.service = self.gsheet_service
+        self.job = _open_json(ingest_config.work_path)
 
     def __repr__(self):
         return f"GoogleSheetConnection('job: {self.job}')"
@@ -54,8 +52,8 @@ class GoogleSheet:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    conf.cred_path, conf.scope)
+                flow = InstalledAppFlow.from_client_config(
+                    conf.credentials, conf.scope)
                 creds = flow.run_local_server()
             # Save the credentials for the next run
             with open('token.pickle', 'wb') as token:
@@ -70,15 +68,15 @@ class GoogleSheet:
         :return: employers list
         """
         j = self.job
-        employers = self.service.spreadsheets().values().get(spreadsheetId=j['sheet_id'],
+        employers = self.gsheet_service.spreadsheets().values().get(spreadsheetId=j['sheet_id'],
                                                              range=j['range']).execute()['values']
         return employers
 
     def get_urls(self):
-        links = self.service.spreadsheets().get(
+        links = self.gsheet_service.spreadsheets().get(
             spreadsheetId=self.job['sheet_id'],
             ranges=self.job['range'],
-            fields=self.SHEET_LINK_FIELD
+            fields=self.config.sheet_link_field
         ).execute()
         links_rows = links['sheets'][0]['data'][0]['rowData']
         raw_urls = []
